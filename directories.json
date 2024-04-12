@@ -1,0 +1,67 @@
+{
+    "directories": [
+        {
+            "title": "Inglourious Basterds",
+            "year": 2009,
+            "quality": "1080p",
+            "path": "Inglourious Bastards (2009) [1080p]",
+            "genres": ["Action", "Drama", "War"],
+            "subtitles": ["fr"],
+            "audio": ["en"]
+        },
+        {
+            "title": "Django Unchained", 
+            "year": 2012,
+            "quality": "1080p",
+            "path": "Django Unchained (2012) [1080p]",
+            "genres": ["Drama", "Western"],
+            "subtitles": ["fr"],
+            "audio": ["en"]
+        },
+        {
+            "title": "Sleeping Dogs",
+            "year": 2024,
+            "quality": "1080p",
+            "path": "Sleeping Dogs (2024) [1080p] [WEBRip] [5.1] [YTS.MX]",
+            "genres": ["Action", "Crime", "Drama"],
+            "subtitles": ["fr", "en"],
+            "audio": ["en"]
+        },
+        {
+            "title": "Split",
+            "year": 2016,
+            "quality": "1080p",
+            "path": "Split (2016) [1080p] [YTS.AG]",
+            "genres": ["Horror", "Thriller"],
+            "subtitles": ["fr"],
+            "audio": ["en"]  
+        },
+        {
+            "title": "Unbreakable",
+            "year": 2000,
+            "quality": "1080p",
+            "path": "Unbreakable (2000) [1080p]",
+            "genres": ["Drama", "Mystery", "Sci-Fi"],
+            "subtitles": ["fr"], 
+            "audio": ["en"]
+        },
+        {
+            "title": "Kung Fu Panda 4",
+            "year": 2024,
+            "quality": "1080p",
+            "path": "Kung Fu Panda 4 (2024) [1080p] [WEBRip] [5.1] [YTS.MX]",
+            "genres": ["Action", "Adventure", "Animation", "Comedy", "Family", "Fantasy"],
+            "subtitles": ["en"],
+            "audio": ["en"]
+        },
+        {  
+            "title": "Jujutsu Kaisen 0",
+            "year": 2021,
+            "quality": "1080p",
+            "path": "Jujutsu Kaisen 0 The Movie (2021) [JAPANESE] [1080p] [BluRay] [5.1] [YTS.MX]",
+            "genres": ["Action", "Animation", "Fantasy"],
+            "subtitles": ["fr"],
+            "audio": ["ja"]
+        }
+    ]
+}

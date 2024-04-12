@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Netflux</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <img src="logo.png" alt="Netflux Logo" class="logo">
+        <nav>
+            <ul>
+                <li><a href="#">Home</a></li>
+                <li><a href="#">Movies</a></li>
+                <li><a href="#">TV Shows</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <h1>Discover Your Next Favorite Movie</h1>
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Search movies...">
+        </div>
+        <div class="filters">
+            <label for="subtitlesFilter">Subtitles:</label>
+            <select id="subtitlesFilter">
+                <option value="">All</option>
+                <option value="en">English</option>
+                <option value="fr">French</option>
+            </select>
+            <label for="audioFilter">Audio:</label>
+            <select id="audioFilter">
+                <option value="">All</option>
+                <option value="en">English</option>
+                <option value="fr">French</option>
+                <option value="ja">Japanese</option>
+            </select>
+        </div>
+        <div class="movie-grid" id="movieGrid"></div>
+    </main>
+
+    <footer>
+        &copy; 2023 Netflux. All rights reserved.
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
