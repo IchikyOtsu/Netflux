@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Netflux</title>
+    <link href="https://vjs.zencdn.net/7.10.2/video-js.min.css" rel="stylesheet">
+    <script src="https://vjs.zencdn.net/7.10.2/video.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #111;
+            color: #fff;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+        }
+        .movie {
+            margin-bottom: 50px;
+        }
+        .movie img {
+            max-width: 100%;
+            height: auto;
+        }
+        .movie h2 {
+            margin-top: 10px;
+        }
+        .video-js {
+            width: 100%;
+            height: 0;
+            padding-top: 56.25%; /* 16:9 Aspect Ratio */
+            position: relative;
+        }
+        .vjs-poster {
+            background-size: cover;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Netflux</h1>
+        <div class="movie">
+            <img src="banner.jpg" alt="Split.poster">
+            <h2>Split</h2>
+            <video id="my-video" class="video-js" controls preload="auto" data-setup='{"poster": "inglourious-basterds-poster.jpg"}'>
+                <source src="Split.2016.1080p.BluRay.x264-[YTS.AG].mp4" type="video/mp4">
+                <track label="French" kind="subtitles" srclang="fr" src="Split.2016.720p.BluRay.x264.[YTS.MX]-French.vtt">
+            </video>
+        </div>
+    </div>
+</body>
+</html>
