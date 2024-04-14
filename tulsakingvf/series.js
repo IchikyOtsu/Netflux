@@ -4,7 +4,7 @@ fetch('../series.json')
         const seriesTitle = document.getElementById('seriesTitle');
         const seasonsContainer = document.getElementById('seasonsContainer');
 
-        const series = data.series.find(series => series.path === 'tulvaking');
+        const series = data.series.find(series => series.path === 'tulsakingvf');
 
         if (series) {
             seriesTitle.textContent = series.title;
@@ -23,7 +23,7 @@ fetch('../series.json')
                     const episodeElement = document.createElement('li');
 
                     const link = document.createElement('a');
-                    link.href = `s${season.number}/${episode.file}`;
+                    link.href = episode.file;
                     link.textContent = `Episode ${episode.number}`;
 
                     episodeElement.appendChild(link);
