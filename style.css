@@ -1,71 +1,25 @@
-body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: #111;
-    color: #fff;
-}
-
-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px;
-    background-color: #000;
-}
-
-.logo {
-    height: 50px;
-}
-
-nav ul {
-    display: flex;
-    list-style: none;
-}
-
-nav ul li {
-    margin-left: 20px;
-}
-
-nav ul li a {
-    color: #fff;
-    text-decoration: none;
-}
-
-main {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-}
-
-h1 {
-    text-align: center;
-    font-size: 2.5em;
-    margin-bottom: 40px;
-}
-
-.movie-grid {
+.series-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     grid-gap: 20px;
 }
 
-.movie {
+.series {
     position: relative;
     cursor: pointer;
     transition: transform 0.3s;
 }
 
-.movie:hover {
+.series:hover {
     transform: scale(1.05);
 }
 
-.movie img {
+.series img {
     width: 100%;
     height: auto;
 }
 
-.movie .overlay {
+.series .overlay {
     position: absolute;
     top: 0;
     left: 0;
@@ -81,36 +35,15 @@ h1 {
     transition: opacity 0.35s;
 }
 
-.movie:hover .overlay {
+.series:hover .overlay {
     opacity: 1;
 }
 
-.movie .overlay > * {
+.series .overlay > * {
     transform: translateY(20px);
     transition: transform 0.35s;
 }
 
-.movie:hover .overlay > * {
+.series:hover .overlay > * {
     transform: translateY(0);
-}
-
-.search-bar {
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-.filters {
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-.filters label, .filters select {
-    margin-left: 10px;
-}
-
-footer {
-    text-align: center;
-    padding: 20px;
-    background-color: #000;
-    margin-top: 40px;
 }
