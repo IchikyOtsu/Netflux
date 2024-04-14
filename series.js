@@ -5,7 +5,7 @@ fetch('series.json')
 
         data.series.forEach(series => {
             const seriesElement = document.createElement('div');
-            seriesElement.classList.add('series');
+            seriesElement.classList.add('movie');
 
             const link = document.createElement('a');
             link.href = `${series.path}/index.html`;
