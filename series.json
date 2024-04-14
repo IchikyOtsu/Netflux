@@ -39,15 +39,15 @@
           "episodes": [
             {
               "number": 1,
-              "file": "tkep01.mp4"
+              "file": "tkep01vf.mp4"
             },
             {
               "number": 2,
-              "file": "tkep02.mp4"
+              "file": "tkep02vf.mp4"
             },
             {
               "number": 3,
-              "file": "tkep03.mp4"
+              "file": "tkep03vf.mp4"
             }
           ]
         }
