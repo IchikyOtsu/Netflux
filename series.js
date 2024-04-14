@@ -1,31 +1,42 @@
-fetch('series.json')
+fetch('../../series.json')
     .then(response => response.json())
     .then(data => {
-        const seriesGrid = document.getElementById('seriesGrid');
+        const seasonTitle = document.getElementById('seasonTitle');
+        const episodesGrid = document.getElementById('episodesGrid');
 
-        data.series.forEach(series => {
-            const seriesElement = document.createElement('div');
-            seriesElement.classList.add('movie');
+        const series = data.series.find(series => series.path === 'tulvaking');
 
-            const link = document.createElement('a');
-            link.href = `${series.path}/index.html`;
+        if (series) {
+            const season = series.seasons.find(season => season.number === 1);
 
-            const poster = document.createElement('img');
-            poster.src = `${series.path}/poster.jpg`;
-            poster.alt = `${series.title} Poster`;
+            if (season) {
+                seasonTitle.textContent = `${series.title} - Season ${season.number}`;
 
-            const overlay = document.createElement('div');
-            overlay.classList.add('overlay');
+                season.episodes.forEach(episode => {
+                    const episodeElement = document.createElement('div');
+                    episodeElement.classList.add('episode');
 
-            const title = document.createElement('h2');
-            title.textContent = series.title;
+                    const link = document.createElement('a');
+                    link.href = episode.file;
 
-            overlay.appendChild(title);
-            link.appendChild(poster);
-            link.appendChild(overlay);
-            seriesElement.appendChild(link);
-            seriesGrid.appendChild(seriesElement);
-        });
+                    const poster = document.createElement('img');
+                    poster.src = `ep${episode.number}.jpg`;
+                    poster.alt = `${series.title} S${season.number}E${episode.number}`;
+
+                    const overlay = document.createElement('div');
+                    overlay.classList.add('overlay');
+
+                    const title = document.createElement('h2');
+                    title.textContent = `Episode ${episode.number}`;
+
+                    overlay.appendChild(title);
+                    link.appendChild(poster);
+                    link.appendChild(overlay);
+                    episodeElement.appendChild(link);
+                    episodesGrid.appendChild(episodeElement);
+                });
+            }
+        }
     })
     .catch(error => {
         console.error('There was a problem with the fetch operation:', error);
