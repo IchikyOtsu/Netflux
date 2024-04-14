@@ -4,7 +4,7 @@ fetch('../../series.json')
         const seasonTitle = document.getElementById('seasonTitle');
         const episodesGrid = document.getElementById('episodesGrid');
 
-        const series = data.series.find(series => series.path === 'tulvaking');
+        const series = data.series.find(series => series.path === 'tulsakingvf');
 
         if (series) {
             const season = series.seasons.find(season => season.number === 1);
@@ -20,7 +20,7 @@ fetch('../../series.json')
                     link.href = episode.file;
 
                     const poster = document.createElement('img');
-                    poster.src = `ep${episode.number}.jpg`;
+                    poster.src = `../s${season.number}/ep${episode.number}.jpg`;
                     poster.alt = `${series.title} S${season.number}E${episode.number}`;
 
                     const overlay = document.createElement('div');
