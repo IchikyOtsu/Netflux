@@ -1,0 +1,19 @@
+{
+  "series": [
+    {
+      "title": "Tulva King",
+      "path": "tulvaking",
+      "seasons": [
+        {
+          "number": 1,
+          "episodes": [
+            {
+              "number": 1,
+              "file": "tkep01.mp4"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
