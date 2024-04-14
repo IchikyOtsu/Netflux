@@ -15,9 +15,6 @@ fetch('../series.json')
 
                 const title = document.createElement('h2');
                 title.textContent = `Season ${season.number}`;
-                title.addEventListener('click', () => {
-                    episodesList.style.display = episodesList.style.display === 'none' ? 'block' : 'none';
-                });
 
                 const episodesList = document.createElement('ul');
                 episodesList.classList.add('episodes-list');
