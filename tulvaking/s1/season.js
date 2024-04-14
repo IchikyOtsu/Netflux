@@ -20,7 +20,7 @@ fetch('../../series.json')
                     link.href = episode.file;
 
                     const poster = document.createElement('img');
-                    poster.src = `ep${episode.number}.jpg`;
+                    poster.src = `../s${season.number}/ep${episode.number}.jpg`;
                     poster.alt = `${series.title} S${season.number}E${episode.number}`;
 
                     const overlay = document.createElement('div');
