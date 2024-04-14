@@ -9,23 +9,23 @@
           "episodes": [
             {
               "number": 1,
-              "file": "tkep01.mp4"
+              "file": "/s1/tkep01.mp4"
             },
             {
               "number": 2,
-              "file": "tkep02.mp4"
+              "file": "/s1/tkep02.mp4"
             },
             {
               "number": 3,
-              "file": "tkep03.mp4"
+              "file": "/s1/tkep03.mp4"
             },
             {
               "number": 4,
-              "file": "tkep04.mp4"
+              "file": "/s1/tkep04.mp4"
             },
             {
               "number": 5,
-              "file": "tkep05.mp4"
+              "file": "/s1/tkep05.mp4"
             }
           ]
         }
@@ -39,15 +39,15 @@
           "episodes": [
             {
               "number": 1,
-              "file": "tkep01vf.mp4"
+              "file": "/s1/tkep01vf.mp4"
             },
             {
               "number": 2,
-              "file": "tkep02vf.mp4"
+              "file": "/s1/tkep02vf.mp4"
             },
             {
               "number": 3,
-              "file": "tkep03vf.mp4"
+              "file": "/s1/tkep03vf.mp4"
             }
           ]
         }
