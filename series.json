@@ -1,7 +1,7 @@
 {
   "series": [
     {
-      "title": "Tulva King",
+      "title": "Tulsa King",
       "path": "tulvaking",
       "seasons": [
         {
@@ -26,6 +26,28 @@
             {
               "number": 5,
               "file": "tkep05.mp4"
+            }
+          ]
+        }
+      ]
+    },{
+      "title": "Tulsa King VF",
+      "path": "tulsakingvf",
+      "seasons": [
+        {
+          "number": 1,
+          "episodes": [
+            {
+              "number": 1,
+              "file": "tkep01.mp4"
+            },
+            {
+              "number": 2,
+              "file": "tkep02.mp4"
+            },
+            {
+              "number": 3,
+              "file": "tkep03.mp4"
             }
           ]
         }
