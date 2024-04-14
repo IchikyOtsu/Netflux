@@ -23,7 +23,7 @@ fetch('../series.json')
                     const episodeElement = document.createElement('li');
 
                     const link = document.createElement('a');
-                    link.href = episode.file;
+                    link.href = `s${season.number}/${episode.file}`;
                     link.textContent = `Episode ${episode.number}`;
 
                     episodeElement.appendChild(link);
