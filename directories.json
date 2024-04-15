@@ -62,6 +62,15 @@
             "genres": ["Action", "Animation", "Fantasy"],
             "subtitles": ["fr"],
             "audio": ["ja"]
+        },
+        {  
+            "title": "Les choristes",
+            "year": 2004,
+            "quality": "1080p",
+            "path": "The Chorus (2004) [1080p] [BluRay] [5.1] [YTS.MX]",
+            "genres": ["Action", "Drame", "Musical"],
+            "subtitles": ["fr"],
+            "audio": ["fr"]
         }
     ]
 }
