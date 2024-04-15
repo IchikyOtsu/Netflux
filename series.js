@@ -1,42 +1,31 @@
-fetch('../../series.json')
+fetch('series.json')
     .then(response => response.json())
     .then(data => {
-        const seasonTitle = document.getElementById('seasonTitle');
-        const episodesGrid = document.getElementById('episodesGrid');
+        const seriesGrid = document.getElementById('seriesGrid');
 
-        const series = data.series.find(series => series.path === 'tulvaking');
+        data.series.forEach(series => {
+            const seriesElement = document.createElement('div');
+            seriesElement.classList.add('movie');
 
-        if (series) {
-            const season = series.seasons.find(season => season.number === 1);
+            const link = document.createElement('a');
+            link.href = `${series.path}/index.html`;
 
-            if (season) {
-                seasonTitle.textContent = `${series.title} - Season ${season.number}`;
+            const poster = document.createElement('img');
+            poster.src = `${series.path}/poster.jpg`;
+            poster.alt = `${series.title} Poster`;
 
-                season.episodes.forEach(episode => {
-                    const episodeElement = document.createElement('div');
-                    episodeElement.classList.add('episode');
+            const overlay = document.createElement('div');
+            overlay.classList.add('overlay');
 
-                    const link = document.createElement('a');
-                    link.href = episode.file;
+            const title = document.createElement('h2');
+            title.textContent = series.title;
 
-                    const poster = document.createElement('img');
-                    poster.src = `ep${episode.number}.jpg`;
-                    poster.alt = `${series.title} S${season.number}E${episode.number}`;
-
-                    const overlay = document.createElement('div');
-                    overlay.classList.add('overlay');
-
-                    const title = document.createElement('h2');
-                    title.textContent = `Episode ${episode.number}`;
-
-                    overlay.appendChild(title);
-                    link.appendChild(poster);
-                    link.appendChild(overlay);
-                    episodeElement.appendChild(link);
-                    episodesGrid.appendChild(episodeElement);
-                });
-            }
-        }
+            overlay.appendChild(title);
+            link.appendChild(poster);
+            link.appendChild(overlay);
+            seriesElement.appendChild(link);
+            seriesGrid.appendChild(seriesElement);
+        });
     })
     .catch(error => {
         console.error('There was a problem with the fetch operation:', error);
