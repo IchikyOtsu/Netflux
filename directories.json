@@ -71,6 +71,14 @@
             "genres": ["Action", "Drame", "Musical"],
             "subtitles": ["fr"],
             "audio": ["fr"]
+        },{  
+            "title": "The Expendables 4",
+            "year": 2023,
+            "quality": "1080p",
+            "path": "The Chorus (2004) [1080p] [BluRay] [5.1] [YTS.MX]",
+            "genres": ["Action", "Aventure", "Thriller", "Guerre"],
+            "subtitles": ["fr"],
+            "audio": ["en"]
         }
     ]
 }
