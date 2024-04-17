@@ -79,6 +79,14 @@
             "genres": ["Action", "Aventure", "Thriller", "Guerre"],
             "subtitles": ["fr"],
             "audio": ["en"]
+        },{  
+            "title": "Absolutely Anything",
+            "year": 2015,
+            "quality": "1080p",
+            "path": "Absolutely Anything (2015) [1080p] [BluRay] [YTS.MX]",
+            "genres": ["Action", "Comédie", "Science-Fiction"],
+            "subtitles": ["fr"],
+            "audio": ["en"]
         }
     ]
 }
