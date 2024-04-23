@@ -74,6 +74,66 @@
           ]
         }
       ]
+    },{
+      "title": "Danmachi VOSTFR",
+      "path": "[SH-F]Danmachi - Saison 1 Intégrale",
+      "seasons": [
+        {
+          "number": 1,
+          "episodes": [
+            {
+              "number": 1,
+              "file": "[SH-F]Danmachi - 01 VOSTFR HD.mp4"
+            },
+            {
+              "number": 2,
+              "file": "[SH-F]Danmachi - 02 VOSTFR HD.mp4"
+            },
+            {
+              "number": 3,
+              "file": "[SH-F]Danmachi - 03 VOSTFR HD.mp4"
+            }, {
+              "number": 4,
+              "file": "[SH-F]Danmachi - 04 VOSTFR HD.mp4"
+            },
+            {
+              "number": 5,
+              "file": "[SH-F]Danmachi - 05 VOSTFR HD.mp4"
+            },
+            {
+              "number": 6,
+              "file": "[SH-F]Danmachi - 06 VOSTFR HD.mp4"
+            }, {
+              "number": 7,
+              "file": "[SH-F]Danmachi - 07 VOSTFR HD.mp4"
+            },
+            {
+              "number": 8,
+              "file": "[SH-F]Danmachi - 08 VOSTFR HD.mp4"
+            },
+            {
+              "number": 9,
+              "file": "[SH-F]Danmachi - 09 VOSTFR HD.mp4"
+            },
+            {
+              "number": 10,
+              "file": "[SH-F]Danmachi - 10 VOSTFR HD.mp4"
+            },
+            {
+              "number": 11,
+              "file": "[SH-F]Danmachi - 11 VOSTFR HD.mp4"
+            },
+            {
+              "number": 12,
+              "file": "[SH-F]Danmachi - 12 VOSTFR HD.mp4"
+            },
+            {
+              "number": 13,
+              "file": "[SH-F]Danmachi - 13 FINAL VOSTFR HD.mp4"
+            }
+          ]
+        }
+      ]
     }
   ]
 }
