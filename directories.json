@@ -87,6 +87,14 @@
             "genres": ["Action", "Comédie", "Science-Fiction"],
             "subtitles": ["fr"],
             "audio": ["en"]
+        },{  
+            "title": "The Menu",
+            "year": 2022,
+            "quality": "1080p",
+            "path": "The Menu (2022) [1080p] [BluRay] [5.1] [YTS.MX]",
+            "genres": ["Action", "Comédie", "Horreur","Thriller"],
+            "subtitles": ["fr"],
+            "audio": ["en"]
         }
     ]
 }
