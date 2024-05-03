@@ -95,6 +95,14 @@
             "genres": ["Action", "Comédie", "Horreur","Thriller"],
             "subtitles": ["fr"],
             "audio": ["en"]
+        },{
+            "title": "Oppenheimer",
+            "year": 2023,
+            "quality": "1080p",
+            "path": "Oppenheimer",
+            "genres": ["Action", "Biographie", "Drame","Historique"],
+            "subtitles": ["fr"],
+            "audio": ["en"]
         }
     ]
 }
