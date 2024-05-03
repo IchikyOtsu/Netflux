@@ -1,2 +1,4 @@
 **/*.mp4
+**/*.avi
+**/*.mkv
 ./git_auto_push.sh
