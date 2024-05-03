@@ -2,7 +2,7 @@
   "series": [
     {
       "title": "Tulsa King",
-      "path": "tulvaking",
+      "path": "tulsaking",
       "seasons": [
         {
           "number": 1,
@@ -48,7 +48,8 @@
             {
               "number": 3,
               "file": "tkep03vf.mp4"
-            }, {
+            },
+            {
               "number": 4,
               "file": "tkep04vf.mp4"
             },
@@ -59,7 +60,8 @@
             {
               "number": 6,
               "file": "tkep06vf.mp4"
-            }, {
+            },
+            {
               "number": 7,
               "file": "tkep07vf.mp4"
             },
@@ -75,7 +77,7 @@
         }
       ]
     },{
-      "title": "Vikings,
+      "title": "Vikings",
       "path": "vikings",
       "seasons": [
         {
@@ -92,7 +94,8 @@
             {
               "number": 3,
               "file": "vikingsS01E03.avi"
-            }, {
+            },
+            {
               "number": 4,
               "file": "vikingsS01E04.avi"
             },
@@ -103,7 +106,8 @@
             {
               "number": 6,
               "file": "vikingsS01E06.avi"
-            }, {
+            },
+            {
               "number": 7,
               "file": "vikingsS01E07.avi"
             },
@@ -136,7 +140,8 @@
             {
               "number": 3,
               "file": "[SH-F]Danmachi - 03 VOSTFR HD.mp4"
-            }, {
+            },
+            {
               "number": 4,
               "file": "[SH-F]Danmachi - 04 VOSTFR HD.mp4"
             },
@@ -147,7 +152,8 @@
             {
               "number": 6,
               "file": "[SH-F]Danmachi - 06 VOSTFR HD.mp4"
-            }, {
+            },
+            {
               "number": 7,
               "file": "[SH-F]Danmachi - 07 VOSTFR HD.mp4"
             },
