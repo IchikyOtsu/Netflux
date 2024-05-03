@@ -93,6 +93,52 @@
         }
       ]
     },{
+      "title": "Bleach Thousand-Year Blood War",
+      "path": "BTYBW",
+      "seasons": [
+        {
+          "number": 1,
+          "episodes": [
+            {
+              "number": 1,
+              "file": "BTYBW01.mp4"
+            },
+            {
+              "number": 2,
+              "file": "BTYBW02.mp4"
+            },
+            {
+              "number": 3,
+              "file": "BTYBW03.mp4"
+            },
+            {
+              "number": 4,
+              "file": "BTYBW04.mp4"
+            },
+            {
+              "number": 5,
+              "file": "BTYBW05.mp4"
+            },
+            {
+              "number": 6,
+              "file": "BTYBW06.mp4"
+            },
+            {
+              "number": 7,
+              "file": "BTYBW07.mp4"
+            },
+            {
+              "number": 8,
+              "file": "BTYBW08.mp4"
+            },
+            {
+              "number": 9,
+              "file": "BTYBW09.mp4"
+            }
+          ]
+        }
+      ]
+    },{
       "title": "Danmachi VOSTFR",
       "path": "[SH-F]Danmachi - Saison 1 Intégrale",
       "seasons": [
