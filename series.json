@@ -83,37 +83,37 @@
           "episodes": [
             {
               "number": 1,
-              "file": "vikingsS01E01.mp4"
+              "file": "vikingsS01E01.avi"
             },
             {
               "number": 2,
-              "file": "vikingsS01E02.mp4"
+              "file": "vikingsS01E02.avi"
             },
             {
               "number": 3,
-              "file": "vikingsS01E03.mp4"
+              "file": "vikingsS01E03.avi"
             }, {
               "number": 4,
-              "file": "vikingsS01E04.mp4"
+              "file": "vikingsS01E04.avi"
             },
             {
               "number": 5,
-              "file": "vikingsS01E05.mp4"
+              "file": "vikingsS01E05.avi"
             },
             {
               "number": 6,
-              "file": "vikingsS01E06.mp4"
+              "file": "vikingsS01E06.avi"
             }, {
               "number": 7,
-              "file": "vikingsS01E07.mp4"
+              "file": "vikingsS01E07.avi"
             },
             {
               "number": 8,
-              "file": "vikingsS01E08.mp4"
+              "file": "vikingsS01E08.avi"
             },
             {
               "number": 9,
-              "file": "vikingsS01E09.mp4"
+              "file": "vikingsS01E09.avi"
             }
           ]
         }
