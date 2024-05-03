@@ -75,6 +75,50 @@
         }
       ]
     },{
+      "title": "Vikings,
+      "path": "vikings",
+      "seasons": [
+        {
+          "number": 1,
+          "episodes": [
+            {
+              "number": 1,
+              "file": "vikingsS01E01.mp4"
+            },
+            {
+              "number": 2,
+              "file": "vikingsS01E02.mp4"
+            },
+            {
+              "number": 3,
+              "file": "vikingsS01E03.mp4"
+            }, {
+              "number": 4,
+              "file": "vikingsS01E04.mp4"
+            },
+            {
+              "number": 5,
+              "file": "vikingsS01E05.mp4"
+            },
+            {
+              "number": 6,
+              "file": "vikingsS01E06.mp4"
+            }, {
+              "number": 7,
+              "file": "vikingsS01E07.mp4"
+            },
+            {
+              "number": 8,
+              "file": "vikingsS01E08.mp4"
+            },
+            {
+              "number": 9,
+              "file": "vikingsS01E09.mp4"
+            }
+          ]
+        }
+      ]
+    },{
       "title": "Danmachi VOSTFR",
       "path": "[SH-F]Danmachi - Saison 1 Intégrale",
       "seasons": [
