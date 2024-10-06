@@ -19,15 +19,6 @@
             "audio": ["en"]
         },
         {
-            "title": "Sleeping Dogs",
-            "year": 2024,
-            "quality": "1080p",
-            "path": "Sleeping Dogs (2024) [1080p] [WEBRip] [5.1] [YTS.MX]",
-            "genres": ["Action", "Crime", "Drama"],
-            "subtitles": ["en"],
-            "audio": ["en"]
-        },
-        {
             "title": "Split",
             "year": 2016,
             "quality": "1080p",
@@ -93,14 +84,6 @@
             "quality": "1080p",
             "path": "The Menu (2022) [1080p] [BluRay] [5.1] [YTS.MX]",
             "genres": ["Action", "Comédie", "Horreur","Thriller"],
-            "subtitles": ["fr"],
-            "audio": ["en"]
-        },{
-            "title": "Oppenheimer",
-            "year": 2023,
-            "quality": "1080p",
-            "path": "Oppenheimer",
-            "genres": ["Action", "Biographie", "Drame","Historique"],
             "subtitles": ["fr"],
             "audio": ["en"]
         }
