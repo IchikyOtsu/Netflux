@@ -86,6 +86,14 @@
             "genres": ["Action", "Comédie", "Horreur","Thriller"],
             "subtitles": ["fr"],
             "audio": ["en"]
+        },{  
+            "title": "The Hateful Eight",
+            "year": 2015,
+            "quality": "1080p",
+            "path": "The Hateful Eight (2015) [1080p] [BluRay] [YTS.MX]",
+            "genres": ["Action", "Policier","Western","Mystère","Thriller","Drame"],
+            "subtitles": ["fr"],
+            "audio": ["en"]
         }
     ]
 }
