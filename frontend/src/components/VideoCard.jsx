@@ -65,7 +65,10 @@ const VideoCard = ({ video }) => {
             }}
           />
         ) : (
-          console.log('⚠️ Pas de poster URL:', { posterUrl, hasImages: !!video.images, images: video.images })
+          (() => {
+            console.log('⚠️ Pas de poster URL:', { posterUrl, hasImages: !!video.images, images: video.images })
+            return null
+          })()
         )}
         
         {/* Overlay par défaut si pas d'image */}

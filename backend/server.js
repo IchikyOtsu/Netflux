@@ -83,20 +83,40 @@ const getVideoMetadata = async (filePath) => {
   try {
     const metadata = await ffprobe(filePath, { path: ffprobeStatic.path })
     
+    // Vérifier que les données sont valides
+    if (!metadata || !metadata.streams) {
+      console.warn('Métadonnées ffprobe invalides pour:', filePath)
+      return {
+        duration: 0,
+        size: 0,
+        bitrate: 0,
+        resolution: null,
+        codec: null,
+        fps: null
+      }
+    }
+    
     const videoStream = metadata.streams.find(stream => stream.codec_type === 'video')
     const audioStream = metadata.streams.find(stream => stream.codec_type === 'audio')
     
     return {
-      duration: parseFloat(metadata.format.duration) || 0,
-      size: parseInt(metadata.format.size) || 0,
-      bitrate: parseInt(metadata.format.bit_rate) || 0,
+      duration: metadata.format?.duration ? parseFloat(metadata.format.duration) : 0,
+      size: metadata.format?.size ? parseInt(metadata.format.size) : 0,
+      bitrate: metadata.format?.bit_rate ? parseInt(metadata.format.bit_rate) : 0,
       resolution: videoStream ? `${videoStream.width}x${videoStream.height}` : null,
       codec: videoStream ? videoStream.codec_name : null,
-      fps: videoStream ? eval(videoStream.r_frame_rate) : null
+      fps: videoStream && videoStream.r_frame_rate ? eval(videoStream.r_frame_rate) : null
     }
   } catch (error) {
     console.error('Erreur lors de l\'analyse ffprobe:', error)
-    return null
+    return {
+      duration: 0,
+      size: 0,
+      bitrate: 0,
+      resolution: null,
+      codec: null,
+      fps: null
+    }
   }
 }
 
@@ -325,7 +345,7 @@ app.get('/api/thumbnail/:filename', (req, res) => {
 app.get('/api/image/:moviePath(*)', (req, res) => {
   try {
     const moviePath = decodeURIComponent(req.params.moviePath)
-    const imageType = req.query.type || 'poster' // poster ou fanart
+    const imageType = req.query.type || 'poster'
     
     // Construire le chemin vers le dossier du film
     const movieDir = path.join(MEDIA_PATH, path.dirname(moviePath))
@@ -337,19 +357,38 @@ app.get('/api/image/:moviePath(*)', (req, res) => {
     console.log('   - Type:', imageType)
     console.log('   - Dossier film:', movieDir)
     console.log('   - Chemin image:', imagePath)
-    console.log('   - Existe:', fs.existsSync(imagePath))
+    console.log('   - MEDIA_PATH:', MEDIA_PATH)
+    console.log('   - path.dirname(moviePath):', path.dirname(moviePath))
+    console.log('   - Dossier existe:', fs.existsSync(movieDir))
+    console.log('   - Image existe:', fs.existsSync(imagePath))
+    
+    // Lister le contenu du dossier pour debug
+    if (fs.existsSync(movieDir)) {
+      try {
+        const contents = fs.readdirSync(movieDir)
+        console.log('   - Contenu du dossier:', contents)
+      } catch (e) {
+        console.log('   - Erreur lecture dossier:', e.message)
+      }
+    }
     
     if (!fs.existsSync(imagePath)) {
+      console.error('❌ Image non trouvée:', imagePath)
       return res.status(404).json({ 
         error: 'Image non trouvée',
         path: imagePath,
-        type: imageType
+        type: imageType,
+        movieDir: movieDir,
+        moviePath: moviePath,
+        mediaPath: MEDIA_PATH
       })
     }
     
     // Servir l'image avec les bons headers
     const stat = fs.statSync(imagePath)
     const mimeType = mime.lookup(imagePath) || 'image/jpeg'
+    
+    console.log('✅ Servir image:', imagePath, `(${stat.size} bytes)`)
     
     res.set({
       'Content-Type': mimeType,
@@ -376,6 +415,46 @@ app.get('/api/health', (req, res) => {
     mediaPath: MEDIA_PATH,
     mediaExists: fs.existsSync(MEDIA_PATH)
   })
+})
+
+// Route: Debug pour tester les images
+app.get('/api/debug/images/:moviePath(*)', (req, res) => {
+  try {
+    const moviePath = decodeURIComponent(req.params.moviePath)
+    const imageType = req.query.type || 'poster'
+    
+    // Construire le chemin vers le dossier du film
+    const movieDir = path.join(MEDIA_PATH, path.dirname(moviePath))
+    const imageName = imageType === 'fanart' ? 'fanart.jpg' : 'poster.jpg'
+    const imagePath = path.join(movieDir, imageName)
+    
+    // Lister le contenu du dossier
+    let folderContents = []
+    try {
+      folderContents = fs.readdirSync(movieDir)
+    } catch (e) {
+      folderContents = ['Erreur lecture dossier: ' + e.message]
+    }
+    
+    res.json({
+      debug: {
+        moviePath: moviePath,
+        imageType: imageType,
+        movieDir: movieDir,
+        imageName: imageName,
+        imagePath: imagePath,
+        imageExists: fs.existsSync(imagePath),
+        folderExists: fs.existsSync(movieDir),
+        folderContents: folderContents,
+        mediaPath: MEDIA_PATH
+      }
+    })
+  } catch (error) {
+    res.status(500).json({ 
+      error: error.message,
+      stack: error.stack
+    })
+  }
 })
 
 // Middleware de gestion des erreurs
