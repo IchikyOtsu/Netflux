@@ -81,25 +81,27 @@ video::-webkit-media-controls-closed-captions-container {
 
 /* Styles pour les sous-titres HTML5 */
 video::cue {
-  background-color: rgba(0, 0, 0, 0.8) !important;
+  background-color: rgba(0, 0, 0, 0.85) !important;
   color: white !important;
-  font-size: 1.2em !important;
+  font-size: 1.8em !important;
   font-family: Arial, sans-serif !important;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8) !important;
-  padding: 4px 8px !important;
-  border-radius: 4px !important;
-  line-height: 1.4 !important;
+  font-weight: 600 !important;
+  text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.9) !important;
+  padding: 8px 16px !important;
+  border-radius: 6px !important;
+  line-height: 1.3 !important;
 }
 
 video::-webkit-media-text-track-display {
-  background-color: rgba(0, 0, 0, 0.8) !important;
+  background-color: rgba(0, 0, 0, 0.85) !important;
   color: white !important;
-  font-size: 1.2em !important;
+  font-size: 1.8em !important;
   font-family: Arial, sans-serif !important;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8) !important;
-  padding: 4px 8px !important;
-  border-radius: 4px !important;
-  line-height: 1.4 !important;
+  font-weight: 600 !important;
+  text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.9) !important;
+  padding: 8px 16px !important;
+  border-radius: 6px !important;
+  line-height: 1.3 !important;
 }
 
 video::-webkit-media-text-track-container {
@@ -119,10 +121,11 @@ video::cue-region {
 
 /* Styles spécifiques pour différents navigateurs */
 video::-moz-media-text-track-display {
-  background-color: rgba(0, 0, 0, 0.8) !important;
+  background-color: rgba(0, 0, 0, 0.85) !important;
   color: white !important;
-  font-size: 1.2em !important;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8) !important;
+  font-size: 1.8em !important;
+  font-weight: 600 !important;
+  text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.9) !important;
 }
 
 /* Assurer que les sous-titres sont visibles */
@@ -134,5 +137,6 @@ video[data-subtitles="true"] {
 video::cue(.active) {
   background-color: rgba(0, 0, 0, 0.9) !important;
   color: #ffffff !important;
-  font-weight: bold !important;
+  font-weight: 700 !important;
+  font-size: 2em !important;
 } 

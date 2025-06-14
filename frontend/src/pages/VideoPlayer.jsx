@@ -28,27 +28,18 @@ const VideoPlayer = () => {
       setLoading(true)
       setError(null)
       
-      // Décoder le chemin complet
-      const videoPath = decodeURIComponent(filename)
-      console.log('🎥 Chargement de la vidéo:', videoPath)
+      const videoUrl = `http://localhost:5000/api/video/${encodeURIComponent(filename)}`
+      setVideoUrl(videoUrl)
       
-      // Générer l'URL de streaming avec le chemin complet
-      const url = getVideoStreamUrl(videoPath)
-      console.log('🎥 URL de streaming:', url)
-      setVideoUrl(url)
-      
-      // Charger les métadonnées avec le chemin complet
-      try {
-        const meta = await getVideoMetadata(videoPath)
-        console.log('📋 Métadonnées chargées:', meta)
-        setMetadata(meta)
-      } catch (metaError) {
-        console.warn('⚠️ Impossible de charger les métadonnées:', metaError)
+      // Charger les métadonnées
+      const metadataResponse = await fetch(`http://localhost:5000/api/videos/${encodeURIComponent(filename)}/metadata`)
+      if (metadataResponse.ok) {
+        const metadataData = await metadataResponse.json()
+        setMetadata(metadataData)
       }
-      
-    } catch (err) {
-      console.error('❌ Erreur lors du chargement de la vidéo:', err)
-      setError(`Impossible de charger la vidéo: ${err.message}`)
+    } catch (error) {
+      console.error('Erreur lors du chargement de la vidéo:', error)
+      setError('Erreur lors du chargement de la vidéo')
     } finally {
       setLoading(false)
     }
@@ -126,8 +117,6 @@ const VideoPlayer = () => {
   // Fonction pour charger et ajouter les sous-titres
   const loadSubtitles = async (videoElement) => {
     if (!metadata?.subtitles || metadata.subtitles.length === 0) return
-
-    console.log('🔤 Chargement des sous-titres...')
     
     // Nettoyer les pistes existantes
     while (videoElement.textTracks.length > 0) {
@@ -154,7 +143,6 @@ const VideoPlayer = () => {
         const response = await fetch(`http://localhost:5000/api/subtitles/${encodeURIComponent(metadata.path)}?index=${i}`)
         if (response.ok) {
           const srtContent = await response.text()
-          console.log(`✅ Sous-titre ${i} chargé:`, subtitle.language, `(${srtContent.length} caractères)`)
           
           // Parser le contenu SRT et ajouter les cues
           const cues = parseSRT(srtContent)
@@ -163,34 +151,24 @@ const VideoPlayer = () => {
               const vttCue = new VTTCue(cue.start, cue.end, cue.text)
               track.addCue(vttCue)
             } catch (error) {
-              console.warn('⚠️ Erreur ajout cue:', error)
+              console.warn('Erreur ajout cue:', error)
             }
           })
           
           // Activer la première piste par défaut
           if (i === 0) {
             track.mode = 'showing'
-            console.log(`✅ Piste ${i} activée par défaut:`, subtitle.language)
           } else {
             track.mode = 'disabled'
           }
           
-          // Ajouter événement pour debug
-          track.oncuechange = () => {
-            if (track.activeCues.length > 0) {
-              console.log(`📝 Sous-titre actif (${subtitle.language}):`, track.activeCues[0].text)
-            }
-          }
-          
         } else {
-          console.error(`❌ Erreur chargement sous-titre ${i}:`, response.status)
+          console.error(`Erreur chargement sous-titre ${i}:`, response.status)
         }
       } catch (error) {
-        console.error(`❌ Erreur création piste ${i}:`, error)
+        console.error(`Erreur création piste ${i}:`, error)
       }
     }
-    
-    console.log(`🔤 ${videoElement.textTracks.length} pistes de sous-titres ajoutées`)
   }
 
   // Fonction pour parser le contenu SRT
@@ -248,44 +226,23 @@ const VideoPlayer = () => {
           
           <div className="relative z-10 p-6">
             <div className="flex items-center justify-between mb-6">
-              <button
-                onClick={handleBack}
-                className="flex items-center space-x-2 text-white hover:text-netflix-red transition-colors"
-              >
-                <ArrowLeft className="w-6 h-6" />
-                <span>Retour</span>
-              </button>
-              
-              {/* Bouton de test des sous-titres */}
-              {metadata?.subtitles && metadata.subtitles.length > 0 && (
+              <div className="flex items-center space-x-4">
                 <button
-                  onClick={() => {
-                    if (videoRef.current) {
-                      console.log('🔤 Test manuel - Pistes disponibles:', videoRef.current.textTracks.length)
-                      for (let i = 0; i < videoRef.current.textTracks.length; i++) {
-                        const track = videoRef.current.textTracks[i]
-                        track.mode = i === 0 ? 'showing' : 'disabled'
-                        console.log(`🔤 Piste ${i} ${i === 0 ? 'activée' : 'désactivée'}:`, track.label, 'Mode:', track.mode)
-                        console.log(`🔤 Piste ${i} cues:`, track.cues ? track.cues.length : 'pas de cues')
-                      }
-                      
-                      // Test d'affichage forcé
-                      if (videoRef.current.textTracks.length > 0) {
-                        const firstTrack = videoRef.current.textTracks[0]
-                        firstTrack.mode = 'hidden'
-                        setTimeout(() => {
-                          firstTrack.mode = 'showing'
-                          console.log('🔄 Piste forcée à showing, cues:', firstTrack.cues?.length || 0)
-                        }, 100)
-                      }
-                    }
-                  }}
-                  className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition-colors"
+                  onClick={handleBack}
+                  className="flex items-center space-x-2 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded transition-colors"
                 >
-                  <Subtitles className="w-5 h-5" />
-                  <span>Test ST</span>
+                  <ArrowLeft className="w-5 h-5" />
+                  <span>Retour</span>
                 </button>
-              )}
+                
+                <button
+                  onClick={toggleFullscreen}
+                  className="flex items-center space-x-2 bg-netflix-red hover:bg-red-600 text-white px-4 py-2 rounded transition-colors"
+                >
+                  <Maximize className="w-5 h-5" />
+                  <span>Plein écran</span>
+                </button>
+              </div>
             </div>
             
             <div className="max-w-4xl">
@@ -374,20 +331,6 @@ const VideoPlayer = () => {
                   
                   // Charger les sous-titres après que la vidéo soit prête
                   await loadSubtitles(videoRef.current)
-                  
-                  // Debug des pistes finales
-                  const textTracks = videoRef.current.textTracks
-                  console.log('🔤 Pistes finales chargées:', textTracks.length)
-                  for (let i = 0; i < textTracks.length; i++) {
-                    const track = textTracks[i]
-                    console.log(`🔤 Piste finale ${i}:`, {
-                      kind: track.kind,
-                      language: track.language,
-                      label: track.label,
-                      mode: track.mode,
-                      cues: track.cues ? track.cues.length : 'pas de cues'
-                    })
-                  }
                 }
               }}
               onTimeUpdate={() => {
