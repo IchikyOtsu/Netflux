@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import ReactPlayer from 'react-player'
-import { ArrowLeft, Volume2, VolumeX, Maximize, Minimize, AlertCircle, Star, Calendar, Clock } from 'lucide-react'
+import { ArrowLeft, Volume2, VolumeX, Maximize, Minimize, AlertCircle, Star, Calendar, Clock, Languages, Subtitles } from 'lucide-react'
 import { getVideoStreamUrl, getVideoMetadata } from '../services/api'
 
 const VideoPlayer = () => {
@@ -80,8 +80,17 @@ const VideoPlayer = () => {
 
   // URL de la bannière si disponible
   const fanartUrl = metadata?.images?.fanart ? 
-    `/api/image/${encodeURIComponent(filename)}?type=fanart` : 
+    `http://localhost:5000/api/image/${encodeURIComponent(filename)}?type=fanart` : 
     null
+
+  // Préparer les pistes de sous-titres
+  const subtitleTracks = metadata?.subtitles?.map(sub => ({
+    kind: 'subtitles',
+    src: `http://localhost:5000/api/subtitles/${encodeURIComponent(filename)}?file=${encodeURIComponent(sub.file)}`,
+    srcLang: sub.language,
+    label: `${sub.language.toUpperCase()} (${sub.format})`,
+    default: sub.language === 'fr' // Français par défaut si disponible
+  })) || []
 
   if (loading) {
     return (
@@ -147,6 +156,20 @@ const VideoPlayer = () => {
                     <span className="text-white">{formatTime(metadata.duration)}</span>
                   </div>
                 )}
+                
+                {metadata?.originalLanguage && (
+                  <div className="flex items-center space-x-2">
+                    <Languages className="w-5 h-5 text-blue-400" />
+                    <span className="text-white">VO {metadata.originalLanguage.toUpperCase()}</span>
+                  </div>
+                )}
+                
+                {metadata?.subtitles && metadata.subtitles.length > 0 && (
+                  <div className="flex items-center space-x-2">
+                    <Subtitles className="w-5 h-5 text-green-400" />
+                    <span className="text-white">{metadata.subtitles.length} sous-titres</span>
+                  </div>
+                )}
               </div>
               
               {metadata?.overview && (
@@ -195,7 +218,9 @@ const VideoPlayer = () => {
                   attributes: {
                     controlsList: 'nodownload',
                     disablePictureInPicture: false,
-                  }
+                    crossOrigin: 'anonymous'
+                  },
+                  tracks: subtitleTracks
                 }
               }}
             />

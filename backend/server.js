@@ -31,6 +31,33 @@ const isVideoFile = (filename) => {
   return VIDEO_EXTENSIONS.includes(ext)
 }
 
+// Fonction pour convertir les codes de langue en noms lisibles
+const getLanguageName = (code) => {
+  const languages = {
+    'en': 'Anglais',
+    'fr': 'Français',
+    'es': 'Espagnol',
+    'de': 'Allemand',
+    'it': 'Italien',
+    'pt': 'Portugais',
+    'ru': 'Russe',
+    'ja': 'Japonais',
+    'ko': 'Coréen',
+    'zh': 'Chinois',
+    'ar': 'Arabe',
+    'hi': 'Hindi',
+    'th': 'Thaï',
+    'tr': 'Turc',
+    'pl': 'Polonais',
+    'nl': 'Néerlandais',
+    'sv': 'Suédois',
+    'da': 'Danois',
+    'no': 'Norvégien',
+    'fi': 'Finnois'
+  }
+  return languages[code] || code.toUpperCase()
+}
+
 // Fonction pour lire les métadonnées TMDB depuis le fichier movie.nfo
 const getMovieInfo = (movieDir) => {
   try {
@@ -76,6 +103,44 @@ const getMovieImages = (movieDir) => {
   
   console.log(`🖼️ Images trouvées:`, Object.keys(images))
   return images
+}
+
+// Fonction pour détecter les sous-titres
+const getMovieSubtitles = (movieDir) => {
+  const subtitles = []
+  
+  try {
+    const subsDir = path.join(movieDir, 'Subs')
+    console.log(`🔤 Recherche sous-titres dans: ${subsDir}`)
+    
+    if (fs.existsSync(subsDir)) {
+      const subFiles = fs.readdirSync(subsDir)
+      console.log(`📝 Fichiers trouvés dans Subs:`, subFiles)
+      
+      subFiles.forEach(file => {
+        const ext = path.extname(file).toLowerCase()
+        if (['.srt', '.vtt', '.ass', '.ssa', '.sub'].includes(ext)) {
+          // Extraire la langue du nom de fichier (ex: "movie.fr.srt" -> "fr")
+          const baseName = path.basename(file, ext)
+          const parts = baseName.split('.')
+          const language = parts.length > 1 ? parts[parts.length - 1] : 'unknown'
+          
+          subtitles.push({
+            file: file,
+            path: path.join('Subs', file),
+            language: language,
+            format: ext.substring(1) // Enlever le point
+          })
+        }
+      })
+    }
+    
+    console.log(`🔤 Sous-titres trouvés:`, subtitles.map(s => `${s.language} (${s.format})`))
+  } catch (error) {
+    console.error('❌ Erreur lors de la recherche de sous-titres:', error)
+  }
+  
+  return subtitles
 }
 
 // Fonction pour obtenir les métadonnées d'une vidéo avec ffprobe
@@ -141,6 +206,7 @@ const getVideoFiles = (dirPath, baseDir = dirPath) => {
         // Lire les métadonnées TMDB si disponibles
         const movieInfo = getMovieInfo(movieDir)
         const images = getMovieImages(movieDir)
+        const subtitles = getMovieSubtitles(movieDir)
         
         // Utiliser le chemin relatif comme identifiant unique
         files.push({
@@ -155,13 +221,16 @@ const getVideoFiles = (dirPath, baseDir = dirPath) => {
           // Métadonnées TMDB
           movieInfo: movieInfo,
           images: images,
+          subtitles: subtitles,
           
           // Informations d'affichage améliorées
           title: movieInfo?.displayTitle || path.parse(item).name,
           year: movieInfo?.displayYear || movieInfo?.extractedYear,
           overview: movieInfo?.tmdb?.overview,
           rating: movieInfo?.tmdb?.voteAverage,
-          genres: movieInfo?.tmdb?.genres || []
+          genres: movieInfo?.tmdb?.genres || [],
+          originalLanguage: movieInfo?.tmdb?.originalLanguage || null,
+          spokenLanguages: movieInfo?.tmdb?.spokenLanguages || []
         })
       }
     }
@@ -238,6 +307,7 @@ app.get('/api/videos/:filename/metadata', async (req, res) => {
     const movieDir = path.dirname(filePath)
     const movieInfo = getMovieInfo(movieDir)
     const images = getMovieImages(movieDir)
+    const subtitles = getMovieSubtitles(movieDir)
     
     res.json({
       name: path.basename(filename),
@@ -253,13 +323,16 @@ app.get('/api/videos/:filename/metadata', async (req, res) => {
       // Métadonnées TMDB
       movieInfo: movieInfo,
       images: images,
+      subtitles: subtitles,
       
       // Informations d'affichage
       title: movieInfo?.displayTitle || path.parse(path.basename(filename)).name,
       year: movieInfo?.displayYear || movieInfo?.extractedYear,
       overview: movieInfo?.tmdb?.overview,
       rating: movieInfo?.tmdb?.voteAverage,
-      genres: movieInfo?.tmdb?.genres || []
+      genres: movieInfo?.tmdb?.genres || [],
+      originalLanguage: movieInfo?.tmdb?.originalLanguage || null,
+      spokenLanguages: movieInfo?.tmdb?.spokenLanguages || []
     })
   } catch (error) {
     console.error('Erreur lors de la récupération des métadonnées:', error)
@@ -339,6 +412,57 @@ app.get('/api/video/:filename(*)', (req, res) => { // (*) pour capturer les slas
 app.get('/api/thumbnail/:filename', (req, res) => {
   // Pour l'instant, retourner une image par défaut ou une erreur 404
   res.status(404).json({ error: 'Miniatures non implémentées' })
+})
+
+// Route: Servir les fichiers de sous-titres
+app.get('/api/subtitles/:moviePath(*)', (req, res) => {
+  try {
+    const moviePath = decodeURIComponent(req.params.moviePath)
+    const subtitleFile = req.query.file // Nom du fichier de sous-titre
+    
+    if (!subtitleFile) {
+      return res.status(400).json({ error: 'Paramètre file manquant' })
+    }
+    
+    // Construire le chemin vers le fichier de sous-titre
+    const movieDir = path.join(MEDIA_PATH, path.dirname(moviePath))
+    const subtitlePath = path.join(movieDir, 'Subs', subtitleFile)
+    
+    console.log('🔤 Demande de sous-titre:')
+    console.log('   - Chemin film:', moviePath)
+    console.log('   - Fichier sous-titre:', subtitleFile)
+    console.log('   - Chemin complet:', subtitlePath)
+    console.log('   - Existe:', fs.existsSync(subtitlePath))
+    
+    if (!fs.existsSync(subtitlePath)) {
+      return res.status(404).json({ 
+        error: 'Fichier de sous-titre non trouvé',
+        path: subtitlePath,
+        file: subtitleFile
+      })
+    }
+    
+    // Servir le fichier de sous-titre avec les bons headers
+    const stat = fs.statSync(subtitlePath)
+    const mimeType = mime.lookup(subtitlePath) || 'text/plain'
+    
+    console.log('✅ Servir sous-titre:', subtitlePath, `(${stat.size} bytes)`)
+    
+    res.set({
+      'Content-Type': mimeType,
+      'Content-Length': stat.size,
+      'Cache-Control': 'public, max-age=3600' // Cache 1h
+    })
+    
+    fs.createReadStream(subtitlePath).pipe(res)
+    
+  } catch (error) {
+    console.error('❌ Erreur lors du service de sous-titre:', error)
+    res.status(500).json({ 
+      error: 'Erreur serveur',
+      details: error.message
+    })
+  }
 })
 
 // Route: Servir les images des films (poster, fanart)

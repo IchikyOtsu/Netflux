@@ -373,14 +373,31 @@ class MediaOrganizer {
         const movie = searchResult.results[0]
         console.log(`✅ Film trouvé sur TMDB: ${movie.title} (${movie.release_date?.split('-')[0]})`)
         
+        // Récupérer les détails complets du film pour avoir plus d'informations
+        let detailedMovie = movie
+        try {
+          const details = await this.moviedb.movieInfo({ id: movie.id })
+          detailedMovie = { ...movie, ...details }
+          console.log(`📋 Détails complets récupérés pour: ${movie.title}`)
+        } catch (detailError) {
+          console.warn('⚠️ Impossible de récupérer les détails complets:', detailError.message)
+        }
+        
         return {
-          title: movie.title,
-          year: movie.release_date ? new Date(movie.release_date).getFullYear() : null,
-          overview: movie.overview,
-          poster_path: movie.poster_path,
-          backdrop_path: movie.backdrop_path,
-          genres: movie.genre_ids || [],
-          rating: movie.vote_average
+          title: detailedMovie.title,
+          year: detailedMovie.release_date ? new Date(detailedMovie.release_date).getFullYear() : null,
+          overview: detailedMovie.overview,
+          poster_path: detailedMovie.poster_path,
+          backdrop_path: detailedMovie.backdrop_path,
+          genres: detailedMovie.genres || detailedMovie.genre_ids || [],
+          rating: detailedMovie.vote_average,
+          originalLanguage: detailedMovie.original_language,
+          spokenLanguages: detailedMovie.spoken_languages || [],
+          voteAverage: detailedMovie.vote_average,
+          voteCount: detailedMovie.vote_count,
+          popularity: detailedMovie.popularity,
+          adult: detailedMovie.adult,
+          tmdbId: detailedMovie.id
         }
       }
       
@@ -416,16 +433,21 @@ class MediaOrganizer {
         // Métadonnées TMDB si disponibles
         ...(movieInfo.metadata && {
           tmdb: {
-            id: movieInfo.metadata.id,
+            id: movieInfo.metadata.tmdbId,
             title: movieInfo.metadata.title,
             originalTitle: movieInfo.metadata.original_title,
             overview: movieInfo.metadata.overview,
             releaseDate: movieInfo.metadata.release_date,
             year: movieInfo.metadata.year,
-            voteAverage: movieInfo.metadata.rating,
+            voteAverage: movieInfo.metadata.voteAverage,
+            voteCount: movieInfo.metadata.voteCount,
+            popularity: movieInfo.metadata.popularity,
+            adult: movieInfo.metadata.adult,
             genres: movieInfo.metadata.genres,
             posterPath: movieInfo.metadata.poster_path,
-            backdropPath: movieInfo.metadata.backdrop_path
+            backdropPath: movieInfo.metadata.backdrop_path,
+            originalLanguage: movieInfo.metadata.originalLanguage,
+            spokenLanguages: movieInfo.metadata.spokenLanguages
           }
         })
       }
