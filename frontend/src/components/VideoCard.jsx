@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Play, Clock, HardDrive } from 'lucide-react'
+import { Play, Clock, HardDrive, Folder } from 'lucide-react'
 
 const VideoCard = ({ video }) => {
   const navigate = useNavigate()
@@ -8,7 +8,7 @@ const VideoCard = ({ video }) => {
   const [imageError, setImageError] = useState(false)
 
   const handlePlay = () => {
-    navigate(`/video/${encodeURIComponent(video.name)}`)
+    navigate(`/video/${encodeURIComponent(video.path)}`)
   }
 
   const formatFileSize = (bytes) => {
@@ -33,8 +33,8 @@ const VideoCard = ({ video }) => {
       <div className="aspect-video bg-gray-800 relative overflow-hidden">
         {!imageError ? (
           <img
-            src={`/api/thumbnail/${encodeURIComponent(video.name)}`}
-            alt={video.name}
+            src={`/api/thumbnail/${encodeURIComponent(video.path)}`}
+            alt={video.displayName}
             className={`w-full h-full object-cover transition-opacity duration-300 ${
               imageLoaded ? 'opacity-100' : 'opacity-0'
             }`}
@@ -65,6 +65,13 @@ const VideoCard = ({ video }) => {
         <h3 className="text-white font-semibold text-lg mb-2 line-clamp-2 group-hover:text-netflix-red transition-colors">
           {video.displayName || video.name}
         </h3>
+        
+        {video.directory && video.directory !== '.' && (
+          <div className="flex items-center space-x-2 mb-2">
+            <Folder className="w-4 h-4 text-gray-500" />
+            <span className="text-sm text-gray-500">{video.directory}</span>
+          </div>
+        )}
         
         <div className="flex items-center justify-between text-sm text-gray-400">
           <div className="flex items-center space-x-4">

@@ -20,6 +20,7 @@ api.interceptors.response.use(
 export const getVideos = async () => {
   try {
     const response = await api.get('/api/videos')
+    console.log('📺 Vidéos récupérées:', response.data.length)
     return response.data
   } catch (error) {
     console.error('Erreur lors de la récupération des vidéos:', error)
@@ -27,10 +28,11 @@ export const getVideos = async () => {
   }
 }
 
-// Récupérer les métadonnées d'une vidéo
-export const getVideoMetadata = async (filename) => {
+// Récupérer les métadonnées d'une vidéo spécifique
+export const getVideoMetadata = async (videoPath) => {
   try {
-    const response = await api.get(`/api/videos/${encodeURIComponent(filename)}/metadata`)
+    // videoPath est maintenant le chemin relatif complet (ex: "films/Final Destination/Final.mp4")
+    const response = await api.get(`/api/videos/${encodeURIComponent(videoPath)}/metadata`)
     return response.data
   } catch (error) {
     console.error('Erreur lors de la récupération des métadonnées:', error)
@@ -39,8 +41,9 @@ export const getVideoMetadata = async (filename) => {
 }
 
 // Générer l'URL de streaming pour une vidéo
-export const getVideoStreamUrl = (filename) => {
-  return `${API_URL}/api/video/${encodeURIComponent(filename)}`
+export const getVideoStreamUrl = (videoPath) => {
+  // videoPath est maintenant le chemin relatif complet
+  return `${API_URL}/api/video/${encodeURIComponent(videoPath)}`
 }
 
 export default api 

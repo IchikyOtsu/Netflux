@@ -69,10 +69,13 @@ const getVideoFiles = (dirPath, baseDir = dirPath) => {
         files = files.concat(getVideoFiles(fullPath, baseDir))
       } else if (stat.isFile() && isVideoFile(item)) {
         const relativePath = path.relative(baseDir, fullPath)
+        // Utiliser le chemin relatif comme identifiant unique
         files.push({
-          name: item,
-          path: relativePath,
+          name: item, // Nom du fichier seulement
+          path: relativePath, // Chemin relatif complet depuis media/
           fullPath: fullPath,
+          displayName: path.parse(item).name, // Nom sans extension
+          directory: path.dirname(relativePath), // Dossier parent
           size: stat.size,
           modified: stat.mtime
         })
@@ -98,6 +101,10 @@ app.get('/api/videos', async (req, res) => {
     }
     
     const videoFiles = getVideoFiles(MEDIA_PATH)
+    console.log(`📁 Fichiers trouvés:`)
+    videoFiles.forEach(file => {
+      console.log(`   - ${file.path} (dans ${file.directory})`)
+    })
     
     // Ajouter des métadonnées basiques
     const videosWithMetadata = await Promise.all(
@@ -105,8 +112,9 @@ app.get('/api/videos', async (req, res) => {
         const metadata = await getVideoMetadata(file.fullPath)
         return {
           name: file.name,
-          path: file.path,
-          displayName: path.parse(file.name).name,
+          path: file.path, // Chemin relatif complet pour l'API
+          displayName: file.displayName,
+          directory: file.directory,
           size: file.size,
           modified: file.modified,
           ...metadata
@@ -128,18 +136,27 @@ app.get('/api/videos', async (req, res) => {
 app.get('/api/videos/:filename/metadata', async (req, res) => {
   try {
     const filename = decodeURIComponent(req.params.filename)
-    const filePath = path.join(MEDIA_PATH, filename)
+    const filePath = path.join(MEDIA_PATH, filename) // filename est maintenant le chemin relatif complet
+    
+    console.log('🔍 Recherche métadonnées pour:', filename)
+    console.log('   - Chemin complet:', filePath)
     
     if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ error: 'Fichier non trouvé' })
+      return res.status(404).json({ 
+        error: 'Fichier non trouvé',
+        path: filePath,
+        filename: filename
+      })
     }
     
     const stats = fs.statSync(filePath)
     const metadata = await getVideoMetadata(filePath)
     
     res.json({
-      name: filename,
-      displayName: path.parse(filename).name,
+      name: path.basename(filename),
+      path: filename,
+      displayName: path.parse(path.basename(filename)).name,
+      directory: path.dirname(filename),
       size: stats.size,
       modified: stats.mtime,
       ...metadata
@@ -151,13 +168,13 @@ app.get('/api/videos/:filename/metadata', async (req, res) => {
 })
 
 // Route: Streaming vidéo avec support du range
-app.get('/api/video/:filename', (req, res) => {
+app.get('/api/video/:filename(*)', (req, res) => { // (*) pour capturer les slashes dans le chemin
   try {
     const filename = decodeURIComponent(req.params.filename)
-    const filePath = path.join(MEDIA_PATH, filename)
+    const filePath = path.join(MEDIA_PATH, filename) // filename est maintenant le chemin relatif complet
     
     console.log('🔍 Tentative de lecture du fichier:')
-    console.log('   - Nom du fichier:', filename)
+    console.log('   - Nom du fichier (chemin relatif):', filename)
     console.log('   - Chemin complet:', filePath)
     console.log('   - Dossier média:', MEDIA_PATH)
     console.log('   - Le fichier existe:', fs.existsSync(filePath))

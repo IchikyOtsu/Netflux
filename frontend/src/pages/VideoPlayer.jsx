@@ -5,7 +5,7 @@ import { ArrowLeft, Volume2, VolumeX, Maximize, Minimize, AlertCircle } from 'lu
 import { getVideoStreamUrl, getVideoMetadata } from '../services/api'
 
 const VideoPlayer = () => {
-  const { filename } = useParams()
+  const { filename } = useParams() // filename est maintenant le chemin complet encodé
   const navigate = useNavigate()
   const [videoUrl, setVideoUrl] = useState('')
   const [metadata, setMetadata] = useState(null)
@@ -28,14 +28,18 @@ const VideoPlayer = () => {
       setLoading(true)
       setError(null)
       
-      // Générer l'URL de streaming
-      const url = getVideoStreamUrl(filename)
-      console.log('🎥 Tentative de lecture:', url)
+      // Décoder le chemin complet
+      const videoPath = decodeURIComponent(filename)
+      console.log('🎥 Chargement de la vidéo:', videoPath)
+      
+      // Générer l'URL de streaming avec le chemin complet
+      const url = getVideoStreamUrl(videoPath)
+      console.log('🎥 URL de streaming:', url)
       setVideoUrl(url)
       
-      // Charger les métadonnées
+      // Charger les métadonnées avec le chemin complet
       try {
-        const meta = await getVideoMetadata(filename)
+        const meta = await getVideoMetadata(videoPath)
         console.log('📋 Métadonnées chargées:', meta)
         setMetadata(meta)
       } catch (metaError) {
@@ -99,10 +103,15 @@ const VideoPlayer = () => {
               <span>Retour</span>
             </button>
             
-            <div className="text-white">
+            <div className="text-white text-center">
               <h1 className="text-lg font-semibold">
-                {metadata?.displayName || decodeURIComponent(filename)}
+                {metadata?.displayName || (metadata?.name && metadata.name.replace(/\.[^/.]+$/, "")) || 'Vidéo'}
               </h1>
+              {metadata?.directory && metadata.directory !== '.' && (
+                <p className="text-sm text-gray-400">
+                  {metadata.directory}
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -114,6 +123,9 @@ const VideoPlayer = () => {
               <div className="text-center p-6">
                 <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
                 <p className="text-red-500 text-lg mb-4">{error}</p>
+                <div className="text-sm text-gray-400 mb-4">
+                  <p>Chemin: {decodeURIComponent(filename)}</p>
+                </div>
                 <button
                   onClick={handleBack}
                   className="bg-netflix-red hover:bg-red-600 text-white px-6 py-3 rounded-lg transition-colors"
@@ -153,7 +165,7 @@ const VideoPlayer = () => {
           <div className="p-6 bg-netflix-black">
             <div className="max-w-4xl mx-auto">
               <h2 className="text-2xl font-bold text-white mb-4">
-                {metadata.displayName || decodeURIComponent(filename)}
+                {metadata.displayName || metadata.name?.replace(/\.[^/.]+$/, "") || 'Vidéo'}
               </h2>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-gray-300">
