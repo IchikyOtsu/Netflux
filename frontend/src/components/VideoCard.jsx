@@ -30,7 +30,7 @@ const VideoCard = ({ video }) => {
 
   // Utiliser le poster TMDB si disponible
   const posterUrl = video.images?.poster ? 
-    `/api/image/${encodeURIComponent(video.path)}?type=poster` : 
+    `http://localhost:5000/api/image/${encodeURIComponent(video.path)}?type=poster` : 
     null
 
   // Debug logs

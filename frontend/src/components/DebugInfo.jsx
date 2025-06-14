@@ -55,6 +55,7 @@ const DebugInfo = () => {
   }
 
   const debugImagePath = (video) => {
+    // Utiliser le port backend directement
     const debugUrl = `http://localhost:5000/api/debug/images/${encodeURIComponent(video.path)}?type=poster`
     console.log('🧪 Debug URL:', debugUrl)
     
@@ -62,6 +63,13 @@ const DebugInfo = () => {
       .then(response => response.json())
       .then(data => {
         console.log('🧪 Debug images:', data)
+        console.log('🧪 Debug détaillé:')
+        console.log('   - moviePath:', data.debug.moviePath)
+        console.log('   - movieDir:', data.debug.movieDir)
+        console.log('   - imagePath:', data.debug.imagePath)
+        console.log('   - imageExists:', data.debug.imageExists)
+        console.log('   - folderExists:', data.debug.folderExists)
+        console.log('   - folderContents:', data.debug.folderContents)
         alert(`Debug Images:\n${JSON.stringify(data.debug, null, 2)}`)
       })
       .catch(err => console.error('❌ Erreur debug:', err))
