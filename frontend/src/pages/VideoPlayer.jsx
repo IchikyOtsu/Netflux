@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import ReactPlayer from 'react-player'
-import { ArrowLeft, Volume2, VolumeX, Maximize, Minimize } from 'lucide-react'
+import { ArrowLeft, Volume2, VolumeX, Maximize, Minimize, AlertCircle } from 'lucide-react'
 import { getVideoStreamUrl, getVideoMetadata } from '../services/api'
 
 const VideoPlayer = () => {
@@ -30,19 +30,21 @@ const VideoPlayer = () => {
       
       // Générer l'URL de streaming
       const url = getVideoStreamUrl(filename)
+      console.log('🎥 Tentative de lecture:', url)
       setVideoUrl(url)
       
       // Charger les métadonnées
       try {
         const meta = await getVideoMetadata(filename)
+        console.log('📋 Métadonnées chargées:', meta)
         setMetadata(meta)
       } catch (metaError) {
-        console.warn('Impossible de charger les métadonnées:', metaError)
+        console.warn('⚠️ Impossible de charger les métadonnées:', metaError)
       }
       
     } catch (err) {
-      console.error('Erreur lors du chargement de la vidéo:', err)
-      setError('Impossible de charger la vidéo')
+      console.error('❌ Erreur lors du chargement de la vidéo:', err)
+      setError(`Impossible de charger la vidéo: ${err.message}`)
     } finally {
       setLoading(false)
     }
@@ -83,22 +85,6 @@ const VideoPlayer = () => {
     )
   }
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-500 text-lg mb-4">{error}</p>
-          <button
-            onClick={handleBack}
-            className="bg-netflix-red hover:bg-red-600 text-white px-6 py-3 rounded-lg transition-colors"
-          >
-            Retour à l'accueil
-          </button>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="min-h-screen bg-black">
       <div className="relative">
@@ -123,28 +109,43 @@ const VideoPlayer = () => {
 
         {/* Video Player */}
         <div className="aspect-video bg-black">
-          <ReactPlayer
-            url={videoUrl}
-            width="100%"
-            height="100%"
-            controls={true}
-            volume={volume}
-            muted={muted}
-            onProgress={({ played }) => setPlayed(played)}
-            onDuration={setDuration}
-            onError={(error) => {
-              console.error('Erreur ReactPlayer:', error)
-              setError('Erreur lors de la lecture de la vidéo')
-            }}
-            config={{
-              file: {
-                attributes: {
-                  controlsList: 'nodownload',
-                  disablePictureInPicture: false,
+          {error ? (
+            <div className="h-full flex items-center justify-center">
+              <div className="text-center p-6">
+                <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+                <p className="text-red-500 text-lg mb-4">{error}</p>
+                <button
+                  onClick={handleBack}
+                  className="bg-netflix-red hover:bg-red-600 text-white px-6 py-3 rounded-lg transition-colors"
+                >
+                  Retour à l'accueil
+                </button>
+              </div>
+            </div>
+          ) : (
+            <ReactPlayer
+              url={videoUrl}
+              width="100%"
+              height="100%"
+              controls={true}
+              volume={volume}
+              muted={muted}
+              onProgress={({ played }) => setPlayed(played)}
+              onDuration={setDuration}
+              onError={(error) => {
+                console.error('❌ Erreur ReactPlayer:', error)
+                setError(`Erreur lors de la lecture: ${error.message || 'Format non supporté'}`)
+              }}
+              config={{
+                file: {
+                  attributes: {
+                    controlsList: 'nodownload',
+                    disablePictureInPicture: false,
+                  }
                 }
-              }
-            }}
-          />
+              }}
+            />
+          )}
         </div>
 
         {/* Video Info */}

@@ -156,13 +156,29 @@ app.get('/api/video/:filename', (req, res) => {
     const filename = decodeURIComponent(req.params.filename)
     const filePath = path.join(MEDIA_PATH, filename)
     
+    console.log('🔍 Tentative de lecture du fichier:')
+    console.log('   - Nom du fichier:', filename)
+    console.log('   - Chemin complet:', filePath)
+    console.log('   - Dossier média:', MEDIA_PATH)
+    console.log('   - Le fichier existe:', fs.existsSync(filePath))
+    
     if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ error: 'Fichier non trouvé' })
+      console.error('❌ Fichier non trouvé:', filePath)
+      return res.status(404).json({ 
+        error: 'Fichier non trouvé',
+        path: filePath,
+        filename: filename
+      })
     }
     
     const stat = fs.statSync(filePath)
     const fileSize = stat.size
     const range = req.headers.range
+    
+    console.log('📊 Informations du fichier:')
+    console.log('   - Taille:', fileSize, 'bytes')
+    console.log('   - Type MIME:', mime.lookup(filePath))
+    console.log('   - Range demandé:', range)
     
     if (range) {
       // Support du streaming progressif
@@ -179,6 +195,7 @@ app.get('/api/video/:filename', (req, res) => {
         'Content-Type': mime.lookup(filePath) || 'video/mp4',
       }
       
+      console.log('📤 Envoi du stream avec headers:', head)
       res.writeHead(206, head)
       file.pipe(res)
     } else {
@@ -188,12 +205,16 @@ app.get('/api/video/:filename', (req, res) => {
         'Content-Type': mime.lookup(filePath) || 'video/mp4',
       }
       
+      console.log('📤 Envoi du fichier complet avec headers:', head)
       res.writeHead(200, head)
       fs.createReadStream(filePath).pipe(res)
     }
   } catch (error) {
-    console.error('Erreur lors du streaming:', error)
-    res.status(500).json({ error: 'Erreur serveur' })
+    console.error('❌ Erreur lors du streaming:', error)
+    res.status(500).json({ 
+      error: 'Erreur serveur',
+      details: error.message
+    })
   }
 })
 
