@@ -30,11 +30,21 @@ const createTestSubtitles = async () => {
       }
       
       // Créer des fichiers de sous-titres d'exemple
-      const subtitleFiles = [
-        { name: 'movie.fr.srt', content: '1\n00:00:01,000 --> 00:00:03,000\nBonjour, ceci est un test en français\n\n' },
-        { name: 'movie.en.srt', content: '1\n00:00:01,000 --> 00:00:03,000\nHello, this is a test in English\n\n' },
-        { name: 'movie.es.srt', content: '1\n00:00:01,000 --> 00:00:03,000\nHola, esto es una prueba en español\n\n' }
-      ]
+      let subtitleFiles = []
+      
+      if (movieFolder.includes('Final Destination')) {
+        subtitleFiles = [
+          { name: 'Final.Destination.Bloodlines.2025.720p.WEBRip.x264.AAC-[YTS.MX].fr.srt', content: '1\n00:00:01,000 --> 00:00:03,000\nBonjour, ceci est un test en français\n\n' },
+          { name: 'Final.Destination.Bloodlines.2025.720p.WEBRip.x264.AAC-[YTS.MX].en.srt', content: '1\n00:00:01,000 --> 00:00:03,000\nHello, this is a test in English\n\n' },
+          { name: 'Final.Destination.Bloodlines.2025.720p.WEBRip.x264.AAC-[YTS.MX].es.srt', content: '1\n00:00:01,000 --> 00:00:03,000\nHola, esto es una prueba en español\n\n' }
+        ]
+      } else {
+        subtitleFiles = [
+          { name: 'movie.fr.srt', content: '1\n00:00:01,000 --> 00:00:03,000\nBonjour, ceci est un test en français\n\n' },
+          { name: 'movie.en.srt', content: '1\n00:00:01,000 --> 00:00:03,000\nHello, this is a test in English\n\n' },
+          { name: 'movie.es.srt', content: '1\n00:00:01,000 --> 00:00:03,000\nHola, esto es una prueba en español\n\n' }
+        ]
+      }
       
       for (const sub of subtitleFiles) {
         const subPath = path.join(subsPath, sub.name)

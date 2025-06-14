@@ -190,14 +190,15 @@ const VideoCard = ({ video }) => {
           {video.originalLanguage && (
             <span className="inline-block bg-blue-600 text-xs px-2 py-1 rounded flex items-center space-x-1">
               <Languages className="w-3 h-3" />
-              <span>VO {getLanguageName(video.originalLanguage)}</span>
+              <span>{getLanguageName(video.originalLanguage)}</span>
             </span>
           )}
           
-          {video.subtitles && video.subtitles.length > 0 && (
+          {video.subtitles && video.subtitles.length > 0 && 
+           video.subtitles.some(sub => sub.language !== 'unknown') && (
             <span className="inline-block bg-green-600 text-xs px-2 py-1 rounded flex items-center space-x-1">
               <Subtitles className="w-3 h-3" />
-              <span>{video.subtitles.length} ST</span>
+              <span>{video.subtitles.filter(sub => sub.language !== 'unknown').length} ST</span>
             </span>
           )}
         </div>

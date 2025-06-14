@@ -83,14 +83,16 @@ const VideoPlayer = () => {
     `http://localhost:5000/api/image/${encodeURIComponent(filename)}?type=fanart` : 
     null
 
-  // Préparer les pistes de sous-titres
-  const subtitleTracks = metadata?.subtitles?.map(sub => ({
-    kind: 'subtitles',
-    src: `http://localhost:5000/api/subtitles/${encodeURIComponent(filename)}?file=${encodeURIComponent(sub.file)}`,
-    srcLang: sub.language,
-    label: `${sub.language.toUpperCase()} (${sub.format})`,
-    default: sub.language === 'fr' // Français par défaut si disponible
-  })) || []
+  // Préparer les pistes de sous-titres (exclure les "unknown")
+  const subtitleTracks = metadata?.subtitles
+    ?.filter(sub => sub.language !== 'unknown')
+    ?.map(sub => ({
+      kind: 'subtitles',
+      src: `http://localhost:5000/api/subtitles/${encodeURIComponent(filename)}?file=${encodeURIComponent(sub.file)}`,
+      srcLang: sub.language,
+      label: `${sub.language.toUpperCase()} (${sub.format})`,
+      default: sub.language === 'fr' // Français par défaut si disponible
+    })) || []
 
   if (loading) {
     return (
@@ -160,14 +162,15 @@ const VideoPlayer = () => {
                 {metadata?.originalLanguage && (
                   <div className="flex items-center space-x-2">
                     <Languages className="w-5 h-5 text-blue-400" />
-                    <span className="text-white">VO {metadata.originalLanguage.toUpperCase()}</span>
+                    <span className="text-white">{metadata.originalLanguage.toUpperCase()}</span>
                   </div>
                 )}
                 
-                {metadata?.subtitles && metadata.subtitles.length > 0 && (
+                {metadata?.subtitles && metadata.subtitles.length > 0 && 
+                 metadata.subtitles.some(sub => sub.language !== 'unknown') && (
                   <div className="flex items-center space-x-2">
                     <Subtitles className="w-5 h-5 text-green-400" />
-                    <span className="text-white">{metadata.subtitles.length} sous-titres</span>
+                    <span className="text-white">{metadata.subtitles.filter(sub => sub.language !== 'unknown').length} sous-titres</span>
                   </div>
                 )}
               </div>

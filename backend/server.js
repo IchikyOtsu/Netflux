@@ -120,10 +120,38 @@ const getMovieSubtitles = (movieDir) => {
       subFiles.forEach(file => {
         const ext = path.extname(file).toLowerCase()
         if (['.srt', '.vtt', '.ass', '.ssa', '.sub'].includes(ext)) {
-          // Extraire la langue du nom de fichier (ex: "movie.fr.srt" -> "fr")
+          // Extraire la langue du nom de fichier
           const baseName = path.basename(file, ext)
+          let language = 'unknown'
+          
+          // Méthode 1: Chercher un code de langue dans le nom (ex: "movie.fr.srt" -> "fr")
           const parts = baseName.split('.')
-          const language = parts.length > 1 ? parts[parts.length - 1] : 'unknown'
+          if (parts.length > 1) {
+            const lastPart = parts[parts.length - 1].toLowerCase()
+            // Vérifier si c'est un code de langue valide (2-3 caractères)
+            if (/^[a-z]{2,3}$/.test(lastPart)) {
+              language = lastPart
+            }
+          }
+          
+          // Méthode 2: Si pas trouvé, chercher dans le nom complet
+          if (language === 'unknown') {
+            const fileName = baseName.toLowerCase()
+            if (fileName.includes('french') || fileName.includes('francais') || fileName.includes('fr')) {
+              language = 'fr'
+            } else if (fileName.includes('english') || fileName.includes('anglais') || fileName.includes('en')) {
+              language = 'en'
+            } else if (fileName.includes('spanish') || fileName.includes('espagnol') || fileName.includes('es')) {
+              language = 'es'
+            } else if (fileName.includes('german') || fileName.includes('allemand') || fileName.includes('de')) {
+              language = 'de'
+            } else if (fileName.includes('italian') || fileName.includes('italien') || fileName.includes('it')) {
+              language = 'it'
+            } else {
+              // Utiliser le nom du fichier comme langue si aucun code trouvé
+              language = baseName.replace(/[^a-zA-Z]/g, '').toLowerCase().substring(0, 10)
+            }
+          }
           
           subtitles.push({
             file: file,
