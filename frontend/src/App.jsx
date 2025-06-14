@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import HomePage from './pages/HomePage'
+import FilmsPage from './pages/FilmsPage'
 import VideoPlayer from './pages/VideoPlayer'
 import Navbar from './components/Navbar'
 import { getVideos } from './services/api'
@@ -37,6 +38,17 @@ function App() {
             path="/" 
             element={
               <HomePage 
+                videos={videos} 
+                loading={loading} 
+                error={error} 
+                onRefresh={loadVideos}
+              />
+            } 
+          />
+          <Route 
+            path="/films" 
+            element={
+              <FilmsPage 
                 videos={videos} 
                 loading={loading} 
                 error={error} 

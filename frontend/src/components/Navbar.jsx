@@ -1,8 +1,11 @@
-import { Link, useNavigate } from 'react-router-dom'
-import { Home, Film } from 'lucide-react'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { Home, Film, PlayCircle } from 'lucide-react'
 
 const Navbar = () => {
   const navigate = useNavigate()
+  const location = useLocation()
+
+  const isActive = (path) => location.pathname === path
 
   return (
     <nav className="bg-netflix-black bg-opacity-95 backdrop-blur-sm border-b border-gray-800 px-6 py-4 sticky top-0 z-50">
@@ -19,10 +22,26 @@ const Navbar = () => {
           <div className="hidden md:flex items-center space-x-6">
             <Link 
               to="/" 
-              className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors"
+              className={`flex items-center space-x-2 transition-colors ${
+                isActive('/') 
+                  ? 'text-white border-b-2 border-netflix-red pb-1' 
+                  : 'text-gray-300 hover:text-white'
+              }`}
             >
               <Home className="w-4 h-4" />
               <span>Accueil</span>
+            </Link>
+            
+            <Link 
+              to="/films" 
+              className={`flex items-center space-x-2 transition-colors ${
+                isActive('/films') 
+                  ? 'text-white border-b-2 border-netflix-red pb-1' 
+                  : 'text-gray-300 hover:text-white'
+              }`}
+            >
+              <PlayCircle className="w-4 h-4" />
+              <span>Films</span>
             </Link>
           </div>
         </div>
