@@ -447,18 +447,37 @@ app.get('/api/subtitles/:moviePath(*)', (req, res) => {
   try {
     const moviePath = decodeURIComponent(req.params.moviePath)
     const subtitleFile = req.query.file // Nom du fichier de sous-titre
+    const subtitleIndex = req.query.index // Index du sous-titre
     
-    if (!subtitleFile) {
-      return res.status(400).json({ error: 'Paramètre file manquant' })
+    let subtitlePath
+    
+    if (subtitleFile) {
+      // Méthode par nom de fichier
+      const movieDir = path.join(MEDIA_PATH, path.dirname(moviePath))
+      subtitlePath = path.join(movieDir, 'Subs', subtitleFile)
+    } else if (subtitleIndex !== undefined) {
+      // Méthode par index
+      const movieDir = path.join(MEDIA_PATH, path.dirname(moviePath))
+      const subtitles = getMovieSubtitles(movieDir)
+      
+      const index = parseInt(subtitleIndex)
+      if (index < 0 || index >= subtitles.length) {
+        return res.status(400).json({ 
+          error: 'Index de sous-titre invalide',
+          index: index,
+          available: subtitles.length
+        })
+      }
+      
+      subtitlePath = path.join(movieDir, 'Subs', subtitles[index].file)
+    } else {
+      return res.status(400).json({ error: 'Paramètre file ou index manquant' })
     }
-    
-    // Construire le chemin vers le fichier de sous-titre
-    const movieDir = path.join(MEDIA_PATH, path.dirname(moviePath))
-    const subtitlePath = path.join(movieDir, 'Subs', subtitleFile)
     
     console.log('🔤 Demande de sous-titre:')
     console.log('   - Chemin film:', moviePath)
     console.log('   - Fichier sous-titre:', subtitleFile)
+    console.log('   - Index sous-titre:', subtitleIndex)
     console.log('   - Chemin complet:', subtitlePath)
     console.log('   - Existe:', fs.existsSync(subtitlePath))
     
@@ -479,7 +498,10 @@ app.get('/api/subtitles/:moviePath(*)', (req, res) => {
     res.set({
       'Content-Type': mimeType,
       'Content-Length': stat.size,
-      'Cache-Control': 'public, max-age=3600' // Cache 1h
+      'Cache-Control': 'public, max-age=3600', // Cache 1h
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET',
+      'Access-Control-Allow-Headers': 'Content-Type'
     })
     
     fs.createReadStream(subtitlePath).pipe(res)
@@ -545,7 +567,10 @@ app.get('/api/image/:moviePath(*)', (req, res) => {
     res.set({
       'Content-Type': mimeType,
       'Content-Length': stat.size,
-      'Cache-Control': 'public, max-age=86400' // Cache 24h
+      'Cache-Control': 'public, max-age=86400', // Cache 24h
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET',
+      'Access-Control-Allow-Headers': 'Content-Type'
     })
     
     fs.createReadStream(imagePath).pipe(res)

@@ -42,4 +42,97 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #555;
+}
+
+/* Styles pour les sous-titres vidéo */
+video::cue {
+  background-color: rgba(0, 0, 0, 0.8) !important;
+  color: white !important;
+  font-size: 1.2em !important;
+  font-family: Arial, sans-serif !important;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8) !important;
+  padding: 4px 8px !important;
+  border-radius: 4px !important;
+  line-height: 1.4 !important;
+}
+
+video::-webkit-media-text-track-display {
+  background-color: rgba(0, 0, 0, 0.8) !important;
+  color: white !important;
+  font-size: 1.2em !important;
+  font-family: Arial, sans-serif !important;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8) !important;
+  padding: 4px 8px !important;
+  border-radius: 4px !important;
+  line-height: 1.4 !important;
+}
+
+/* Forcer l'affichage des pistes de texte */
+video::-webkit-media-text-track-container {
+  position: relative !important;
+  display: block !important;
+  overflow: visible !important;
+}
+
+/* Styles pour les contrôles de sous-titres */
+video::-webkit-media-controls-closed-captions-container {
+  display: block !important;
+}
+
+/* Styles pour les sous-titres HTML5 */
+video::cue {
+  background-color: rgba(0, 0, 0, 0.8) !important;
+  color: white !important;
+  font-size: 1.2em !important;
+  font-family: Arial, sans-serif !important;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8) !important;
+  padding: 4px 8px !important;
+  border-radius: 4px !important;
+  line-height: 1.4 !important;
+}
+
+video::-webkit-media-text-track-display {
+  background-color: rgba(0, 0, 0, 0.8) !important;
+  color: white !important;
+  font-size: 1.2em !important;
+  font-family: Arial, sans-serif !important;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8) !important;
+  padding: 4px 8px !important;
+  border-radius: 4px !important;
+  line-height: 1.4 !important;
+}
+
+video::-webkit-media-text-track-container {
+  position: relative !important;
+  display: block !important;
+  overflow: visible !important;
+}
+
+/* Forcer l'affichage des sous-titres */
+video {
+  position: relative;
+}
+
+video::cue-region {
+  background: transparent !important;
+}
+
+/* Styles spécifiques pour différents navigateurs */
+video::-moz-media-text-track-display {
+  background-color: rgba(0, 0, 0, 0.8) !important;
+  color: white !important;
+  font-size: 1.2em !important;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8) !important;
+}
+
+/* Assurer que les sous-titres sont visibles */
+video[data-subtitles="true"] {
+  --subtitle-display: block !important;
+}
+
+/* Style pour les cues actives */
+video::cue(.active) {
+  background-color: rgba(0, 0, 0, 0.9) !important;
+  color: #ffffff !important;
+  font-weight: bold !important;
 } 
