@@ -474,12 +474,7 @@ app.get('/api/subtitles/:moviePath(*)', (req, res) => {
       return res.status(400).json({ error: 'Paramètre file ou index manquant' })
     }
     
-    console.log('🔤 Demande de sous-titre:')
-    console.log('   - Chemin film:', moviePath)
-    console.log('   - Fichier sous-titre:', subtitleFile)
-    console.log('   - Index sous-titre:', subtitleIndex)
-    console.log('   - Chemin complet:', subtitlePath)
-    console.log('   - Existe:', fs.existsSync(subtitlePath))
+
     
     if (!fs.existsSync(subtitlePath)) {
       return res.status(404).json({ 
@@ -493,8 +488,6 @@ app.get('/api/subtitles/:moviePath(*)', (req, res) => {
     const stat = fs.statSync(subtitlePath)
     const mimeType = mime.lookup(subtitlePath) || 'text/plain'
     
-    console.log('✅ Servir sous-titre:', subtitlePath, `(${stat.size} bytes)`)
-    
     res.set({
       'Content-Type': mimeType,
       'Content-Length': stat.size,
@@ -507,7 +500,7 @@ app.get('/api/subtitles/:moviePath(*)', (req, res) => {
     fs.createReadStream(subtitlePath).pipe(res)
     
   } catch (error) {
-    console.error('❌ Erreur lors du service de sous-titre:', error)
+    console.error('Erreur lors du service de sous-titre:', error)
     res.status(500).json({ 
       error: 'Erreur serveur',
       details: error.message
