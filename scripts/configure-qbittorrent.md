@@ -61,3 +61,47 @@ media/
 - **Organisation parfaite** avec métadonnées
 - **Détection automatique** des nouveaux films
 - **Intégration complète** avec Netflux 
+
+## 🔧 **Corrections apportées :**
+
+### 1. **Filtrage des types de fichiers**
+- **Fichiers vidéo uniquement** : Seuls les fichiers `.mp4`, `.mkv`, `.avi`, etc. sont traités comme des films
+- **Fichiers associés** : Les `.srt`, `.jpg`, `.txt` sont maintenant gérés comme des fichiers associés
+- **Ignorer les autres** : Les fichiers non supportés sont ignorés
+
+### 2. **Gestion des fichiers associés**
+- Les sous-titres et autres fichiers sont automatiquement associés au film correspondant
+- Ils sont déplacés dans le même dossier que le film principal
+
+### 3. **Amélioration de la logique**
+- Séparation claire entre fichiers vidéo et fichiers associés
+- Meilleure organisation des dossiers
+- Évite la création de "films" pour les sous-titres
+
+### 4. **Problème API TMDB (Erreur 401)**
+Pour résoudre l'erreur d'authentification TMDB, vous devez :
+
+1. **Créer/vérifier votre fichier `.env`** dans le répertoire racine :
+```env
+TMDB_API_KEY=votre_clé_api_tmdb_ici
+DOWNLOADS_PATH=/downloads
+MOVIES_PATH=/movies
+```
+
+2. **Obtenir une clé API TMDB** :
+   - Allez sur https://www.themoviedb.org/
+   - Créez un compte
+   - Allez dans Paramètres > API
+   - Demandez une clé API
+
+3. **Reconstruire les conteneurs** :
+```bash
+docker compose down
+docker compose up --build
+```
+
+Maintenant le système devrait :
+- ✅ Traiter uniquement les fichiers vidéo comme des films
+- ✅ Associer automatiquement les sous-titres aux films
+- ✅ Ignorer les fichiers non pertinents
+- ✅ Fonctionner avec l'API TMDB une fois la clé configurée 
