@@ -27,6 +27,22 @@ services:
       - NODE_ENV=development
       - MEDIA_PATH=/media
 
+  # Service d'organisation automatique des films
+  media-organizer:
+    build: ./media-organizer
+    volumes:
+      - ./media:/media
+      - ./media-organizer:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - MEDIA_PATH=/media
+      - TMDB_API_KEY=${TMDB_API_KEY:-}
+      - WATCH_FOLDERS=/media/downloads,/media/incoming
+    depends_on:
+      - backend
+    restart: unless-stopped
+
   # qBittorrent (optionnel)
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent:latest
@@ -38,7 +54,8 @@ services:
       - WEBUI_PORT=8080
     volumes:
       - ./qbittorrent/config:/config
-      - ./media:/downloads
+      - ./media/downloads:/downloads  # Téléchargements dans un dossier temporaire
+      - ./media:/media
     ports:
       - "8080:8080"
       - "6881:6881"

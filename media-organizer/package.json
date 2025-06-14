@@ -1,0 +1,28 @@
+{
+  "name": "media-organizer",
+  "version": "1.0.0",
+  "description": "Service d'organisation automatique des médias",
+  "main": "organizer.js",
+  "scripts": {
+    "start": "node organizer.js",
+    "dev": "nodemon organizer.js"
+  },
+  "keywords": ["media", "organizer", "movies", "automation"],
+  "author": "Netflux",
+  "license": "MIT",
+  "dependencies": {
+    "chokidar": "^3.5.3",
+    "moviedb-promise": "^4.0.7",
+    "ffmpeg-static": "^5.2.0",
+    "ffprobe": "^1.1.2",
+    "ffprobe-static": "^3.1.0",
+    "fs-extra": "^11.1.1",
+    "path": "^0.12.7",
+    "dotenv": "^16.0.3",
+    "sanitize-filename": "^1.6.3",
+    "opensubtitles-api": "^5.1.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+} 
