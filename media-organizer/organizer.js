@@ -297,6 +297,11 @@ class MediaOrganizer {
         year
       })
       
+      // Télécharger les images (poster et bannière) depuis TMDB
+      if (metadata && (metadata.poster_path || metadata.backdrop_path)) {
+        await this.downloadMovieImages(targetFolder, metadata, sanitizedFolderName)
+      }
+      
       console.log(`✅ Film organisé avec succès: ${folderName}`)
       
     } catch (error) {
@@ -388,32 +393,79 @@ class MediaOrganizer {
   }
 
   // Créer un fichier d'informations
-  async createInfoFile(movieDir, movieInfo, metadata) {
+  async createInfoFile(movieDir, movieInfo) {
     try {
       const infoData = {
+        // Informations de base
         originalName: movieInfo.originalName,
         extractedTitle: movieInfo.title,
         extractedYear: movieInfo.year,
         processedDate: new Date().toISOString(),
-        ...(metadata && {
+        
+        // Informations finales pour le site
+        displayTitle: movieInfo.finalTitle || movieInfo.title,
+        displayYear: movieInfo.year,
+        folderName: path.basename(movieDir),
+        
+        // Fichiers d'images
+        images: {
+          poster: 'poster.jpg',
+          fanart: 'fanart.jpg'
+        },
+        
+        // Métadonnées TMDB si disponibles
+        ...(movieInfo.metadata && {
           tmdb: {
-            id: metadata.id,
-            title: metadata.title,
-            originalTitle: metadata.original_title,
-            overview: metadata.overview,
-            releaseDate: metadata.release_date,
-            voteAverage: metadata.vote_average,
-            genres: metadata.genre_ids
+            id: movieInfo.metadata.id,
+            title: movieInfo.metadata.title,
+            originalTitle: movieInfo.metadata.original_title,
+            overview: movieInfo.metadata.overview,
+            releaseDate: movieInfo.metadata.release_date,
+            year: movieInfo.metadata.year,
+            voteAverage: movieInfo.metadata.rating,
+            genres: movieInfo.metadata.genres,
+            posterPath: movieInfo.metadata.poster_path,
+            backdropPath: movieInfo.metadata.backdrop_path
           }
         })
       }
 
       const infoPath = path.join(movieDir, 'movie.nfo')
       await fs.writeJson(infoPath, infoData, { spaces: 2 })
-      console.log('📋 Fichier d\'informations créé')
+      console.log('📋 Fichier d\'informations créé avec métadonnées complètes')
 
     } catch (error) {
       console.error('❌ Erreur création fichier info:', error)
+    }
+  }
+
+  // Télécharger les images (poster et bannière) depuis TMDB
+  async downloadMovieImages(targetFolder, metadata, sanitizedFolderName) {
+    try {
+      console.log('🖼️ Téléchargement des images depuis TMDB...')
+      
+      // Télécharger le poster si disponible
+      if (metadata.poster_path) {
+        const posterUrl = `https://image.tmdb.org/t/p/w500${metadata.poster_path}`
+        const posterResponse = await axios.get(posterUrl, { responseType: 'arraybuffer' })
+        const posterPath = path.join(targetFolder, 'poster.jpg')
+        await fs.promises.writeFile(posterPath, posterResponse.data)
+        console.log('📸 Poster téléchargé: poster.jpg')
+      }
+      
+      // Télécharger la bannière si disponible
+      if (metadata.backdrop_path) {
+        const backdropUrl = `https://image.tmdb.org/t/p/w1280${metadata.backdrop_path}`
+        const backdropResponse = await axios.get(backdropUrl, { responseType: 'arraybuffer' })
+        const backdropPath = path.join(targetFolder, 'fanart.jpg')
+        await fs.promises.writeFile(backdropPath, backdropResponse.data)
+        console.log('🖼️ Bannière téléchargée: fanart.jpg')
+      }
+      
+      console.log('✅ Images téléchargées avec succès')
+      
+    } catch (error) {
+      console.error('❌ Erreur lors du téléchargement des images:', error.message)
     }
   }
 }
