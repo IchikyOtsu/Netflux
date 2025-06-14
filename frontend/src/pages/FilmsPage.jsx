@@ -1,8 +1,12 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Search, Filter, SortAsc, SortDesc, X, Languages, Calendar, Star, Clock, Tag } from 'lucide-react'
 import VideoCard from '../components/VideoCard'
+import { getFilms } from '../services/api'
 
-const FilmsPage = ({ videos, loading, error, onRefresh }) => {
+const FilmsPage = () => {
+  const [films, setFilms] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedLanguage, setSelectedLanguage] = useState('')
   const [selectedGenre, setSelectedGenre] = useState('')
@@ -10,6 +14,25 @@ const FilmsPage = ({ videos, loading, error, onRefresh }) => {
   const [sortBy, setSortBy] = useState('title') // title, year, rating, duration
   const [sortOrder, setSortOrder] = useState('asc') // asc, desc
   const [showFilters, setShowFilters] = useState(false)
+
+  // Charger les films au montage du composant
+  useEffect(() => {
+    loadFilms()
+  }, [])
+
+  const loadFilms = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const data = await getFilms()
+      setFilms(data)
+    } catch (err) {
+      console.error('Erreur lors du chargement des films:', err)
+      setError('Impossible de charger les films')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   // Fonction pour convertir les codes de langue
   const getLanguageName = (code) => {
@@ -34,28 +57,28 @@ const FilmsPage = ({ videos, loading, error, onRefresh }) => {
     return languages[code] || code?.toUpperCase() || 'Inconnu'
   }
 
-  // Extraire les options de filtrage des vidéos
+  // Extraire les options de filtrage des films
   const filterOptions = useMemo(() => {
     const languages = new Set()
     const genres = new Set()
     const years = new Set()
 
-    videos.forEach(video => {
+    films.forEach(film => {
       // Langues
-      if (video.originalLanguage) {
-        languages.add(video.originalLanguage)
+      if (film.originalLanguage) {
+        languages.add(film.originalLanguage)
       }
       
       // Genres
-      if (video.genres && video.genres.length > 0) {
-        video.genres.forEach(genre => {
+      if (film.genres && film.genres.length > 0) {
+        film.genres.forEach(genre => {
           if (genre.name) genres.add(genre.name)
         })
       }
       
       // Années
-      if (video.year) {
-        years.add(video.year)
+      if (film.year) {
+        years.add(film.year)
       }
     })
 
@@ -64,26 +87,26 @@ const FilmsPage = ({ videos, loading, error, onRefresh }) => {
       genres: Array.from(genres).sort(),
       years: Array.from(years).sort((a, b) => b - a) // Plus récent en premier
     }
-  }, [videos])
+  }, [films])
 
-  // Filtrer et trier les vidéos
-  const filteredAndSortedVideos = useMemo(() => {
-    let filtered = videos.filter(video => {
+  // Filtrer et trier les films
+  const filteredAndSortedFilms = useMemo(() => {
+    let filtered = films.filter(film => {
       // Recherche textuelle
       const matchesSearch = !searchTerm || 
-        video.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        video.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        video.overview?.toLowerCase().includes(searchTerm.toLowerCase())
+        film.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        film.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        film.overview?.toLowerCase().includes(searchTerm.toLowerCase())
 
       // Filtre par langue
-      const matchesLanguage = !selectedLanguage || video.originalLanguage === selectedLanguage
+      const matchesLanguage = !selectedLanguage || film.originalLanguage === selectedLanguage
 
       // Filtre par genre
       const matchesGenre = !selectedGenre || 
-        (video.genres && video.genres.some(genre => genre.name === selectedGenre))
+        (film.genres && film.genres.some(genre => genre.name === selectedGenre))
 
       // Filtre par année
-      const matchesYear = !selectedYear || video.year === parseInt(selectedYear)
+      const matchesYear = !selectedYear || film.year === parseInt(selectedYear)
 
       return matchesSearch && matchesLanguage && matchesGenre && matchesYear
     })
@@ -121,7 +144,7 @@ const FilmsPage = ({ videos, loading, error, onRefresh }) => {
     })
 
     return filtered
-  }, [videos, searchTerm, selectedLanguage, selectedGenre, selectedYear, sortBy, sortOrder])
+  }, [films, searchTerm, selectedLanguage, selectedGenre, selectedYear, sortBy, sortOrder])
 
   // Réinitialiser les filtres
   const clearFilters = () => {
@@ -172,8 +195,8 @@ const FilmsPage = ({ videos, loading, error, onRefresh }) => {
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-white mb-2">Films</h1>
             <p className="text-gray-400">
-              {filteredAndSortedVideos.length} film{filteredAndSortedVideos.length !== 1 ? 's' : ''} 
-              {activeFiltersCount > 0 && ` (${videos.length} au total)`}
+              {filteredAndSortedFilms.length} film{filteredAndSortedFilms.length !== 1 ? 's' : ''} 
+              {activeFiltersCount > 0 && ` (${films.length} au total)`}
             </p>
           </div>
 
@@ -356,7 +379,7 @@ const FilmsPage = ({ videos, loading, error, onRefresh }) => {
           )}
 
           {/* Grille des films */}
-          {filteredAndSortedVideos.length === 0 ? (
+          {filteredAndSortedFilms.length === 0 ? (
             <div className="text-center py-16">
               <div className="w-16 h-16 text-gray-600 mx-auto mb-4">🎬</div>
               <h2 className="text-2xl font-semibold text-gray-300 mb-2">
@@ -377,7 +400,7 @@ const FilmsPage = ({ videos, loading, error, onRefresh }) => {
                 </button>
               ) : (
                 <button
-                  onClick={onRefresh}
+                  onClick={loadFilms}
                   className="bg-netflix-red hover:bg-red-600 text-white px-6 py-3 rounded-lg transition-colors"
                 >
                   Actualiser
@@ -386,8 +409,8 @@ const FilmsPage = ({ videos, loading, error, onRefresh }) => {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-              {filteredAndSortedVideos.map((video, index) => (
-                <VideoCard key={`${video.name}-${index}`} video={video} />
+              {filteredAndSortedFilms.map((film, index) => (
+                <VideoCard key={`${film.name}-${index}`} video={film} />
               ))}
             </div>
           )}

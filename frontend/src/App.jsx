@@ -47,14 +47,7 @@ function App() {
           />
           <Route 
             path="/films" 
-            element={
-              <FilmsPage 
-                videos={videos} 
-                loading={loading} 
-                error={error} 
-                onRefresh={loadVideos}
-              />
-            } 
+            element={<FilmsPage />} 
           />
           <Route path="/video/:filename" element={<VideoPlayer />} />
         </Routes>

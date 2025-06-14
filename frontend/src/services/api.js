@@ -16,7 +16,7 @@ api.interceptors.response.use(
   }
 )
 
-// Récupérer la liste des vidéos
+// Récupérer la liste des vidéos (exclut downloads)
 export const getVideos = async () => {
   try {
     const response = await api.get('/api/videos')
@@ -24,6 +24,18 @@ export const getVideos = async () => {
     return response.data
   } catch (error) {
     console.error('Erreur lors de la récupération des vidéos:', error)
+    throw error
+  }
+}
+
+// Récupérer la liste des films uniquement (dossier films)
+export const getFilms = async () => {
+  try {
+    const response = await api.get('/api/films')
+    console.log('🎬 Films récupérés:', response.data.length)
+    return response.data
+  } catch (error) {
+    console.error('Erreur lors de la récupération des films:', error)
     throw error
   }
 }
