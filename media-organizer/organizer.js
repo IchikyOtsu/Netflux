@@ -46,8 +46,6 @@ console.log(`🔑 TMDB API: ${TMDB_API_KEY ? 'Configurée' : 'Non configurée'}`
 class MediaOrganizer {
   constructor() {
     this.processingQueue = new Set()
-    this.pendingFiles = new Map()
-    this.stabilityDelay = 10000 // 10 secondes pour s'assurer que le fichier est stable
     this.processedMovies = new Map() // Pour associer les fichiers aux films
     
     // Initialiser TMDB
@@ -191,6 +189,7 @@ class MediaOrganizer {
   async handleNewFile(filePath) {
     const fileName = path.basename(filePath)
     const ext = path.extname(filePath).toLowerCase()
+    const fileDir = path.dirname(filePath)
     
     console.log(`📁 Nouveau fichier détecté: ${fileName}`)
 
@@ -203,106 +202,31 @@ class MediaOrganizer {
     // Vérifier le type de fichier
     if (VIDEO_EXTENSIONS.includes(ext)) {
       console.log(`🎬 Fichier vidéo détecté: ${fileName}`)
-      // Traiter directement car chokidar attend déjà la stabilité
-      await this.processMovie(filePath)
+      
+      // Vérifier si on traite déjà ce dossier
+      const isInMovieFolder = this.isInMovieFolder(filePath)
+      const folderKey = isInMovieFolder ? fileDir : filePath
+      
+      if (this.processingQueue.has(folderKey)) {
+        console.log(`⏳ Dossier/fichier déjà en cours de traitement: ${path.basename(folderKey)}`)
+        return
+      }
+      
+      this.processingQueue.add(folderKey)
+      
+      try {
+        // Traiter directement car chokidar attend déjà la stabilité
+        await this.processMovie(filePath)
+      } finally {
+        this.processingQueue.delete(folderKey)
+      }
+      
     } else if (SUBTITLE_EXTENSIONS.includes(ext) || IMAGE_EXTENSIONS.includes(ext) || INFO_EXTENSIONS.includes(ext)) {
       console.log(`📎 Fichier associé détecté: ${fileName}`)
-      await this.handleAssociatedFile(filePath)
+      // Les fichiers associés seront déplacés avec le dossier complet
+      console.log(`📎 Fichier associé sera traité avec le dossier principal`)
     } else {
       console.log(`⚠️ Type de fichier non supporté: ${fileName}`)
-    }
-  }
-
-  // Programmer le traitement d'un fichier vidéo
-  async scheduleVideoProcessing(filePath) {
-    const fileName = path.basename(filePath)
-    
-    // Annuler le traitement précédent s'il existe
-    if (this.pendingFiles.has(filePath)) {
-      clearTimeout(this.pendingFiles.get(filePath))
-    }
-
-    // Programmer le traitement après le délai de stabilité
-    const timeoutId = setTimeout(async () => {
-      try {
-        console.log(`🔍 Vérification de la stabilité: ${fileName}`)
-        
-        // Vérifier plusieurs fois si le fichier est stable
-        let isStable = false
-        let attempts = 0
-        const maxAttempts = 5
-        
-        while (!isStable && attempts < maxAttempts) {
-          isStable = await this.isFileStable(filePath)
-          if (!isStable) {
-            console.log(`⏳ Fichier encore en cours de téléchargement, tentative ${attempts + 1}/${maxAttempts}`)
-            await new Promise(resolve => setTimeout(resolve, 5000)) // Attendre 5 secondes de plus
-          }
-          attempts++
-        }
-        
-        if (isStable) {
-          console.log(`✅ Fichier stable, traitement en cours: ${fileName}`)
-          await this.processMovie(filePath)
-        } else {
-          console.log(`⚠️ Fichier toujours instable après ${maxAttempts} tentatives: ${fileName}`)
-        }
-        
-        this.pendingFiles.delete(filePath)
-      } catch (error) {
-        console.error('❌ Erreur lors du traitement du fichier:', error.message)
-        this.pendingFiles.delete(filePath)
-      }
-    }, this.stabilityDelay)
-
-    this.pendingFiles.set(filePath, timeoutId)
-  }
-
-  // Gérer les fichiers associés (sous-titres, images, etc.)
-  async handleAssociatedFile(filePath) {
-    const fileName = path.basename(filePath)
-    const baseName = path.basename(filePath, path.extname(filePath))
-    
-    // Chercher un film correspondant dans les films traités
-    let targetMovieFolder = null
-    
-    for (const [moviePath, movieInfo] of this.processedMovies.entries()) {
-      const movieBaseName = path.basename(moviePath, path.extname(moviePath))
-      
-      // Vérifier si le nom de base correspond ou contient le nom du film
-      if (baseName.includes(movieInfo.cleanTitle) || movieInfo.cleanTitle.includes(baseName)) {
-        targetMovieFolder = movieInfo.targetFolder
-        break
-      }
-    }
-    
-    if (targetMovieFolder) {
-      try {
-        const targetPath = path.join(targetMovieFolder, fileName)
-        await fs.promises.copyFile(filePath, targetPath)
-        await fs.promises.unlink(filePath)
-        console.log(`📎 Fichier associé déplacé: ${targetPath}`)
-      } catch (error) {
-        console.error(`❌ Erreur lors du déplacement du fichier associé ${fileName}:`, error.message)
-      }
-    } else {
-      console.log(`⚠️ Aucun film correspondant trouvé pour: ${fileName}`)
-    }
-  }
-
-  // Vérifier si un fichier est stable (pas en cours d'écriture)
-  async isFileStable(filePath) {
-    try {
-      const stats1 = await fs.promises.stat(filePath)
-      await new Promise(resolve => setTimeout(resolve, 2000)) // Attendre 2 secondes
-      const stats2 = await fs.promises.stat(filePath)
-      
-      // Vérifier si la taille et la date de modification sont identiques
-      return stats1.size === stats2.size && 
-             stats1.mtime.getTime() === stats2.mtime.getTime()
-    } catch (error) {
-      console.error('❌ Erreur lors de la vérification de stabilité:', error.message)
-      return false
     }
   }
 
@@ -311,8 +235,19 @@ class MediaOrganizer {
     try {
       console.log(`🔍 Traitement du film: ${path.basename(filePath)}`)
       
-      // Extraire les informations du nom de fichier
-      const movieInfo = this.extractMovieInfo(filePath)
+      // Déterminer si le fichier est dans un dossier de film ou seul
+      const fileDir = path.dirname(filePath)
+      const fileName = path.basename(filePath)
+      const isInMovieFolder = this.isInMovieFolder(filePath)
+      
+      console.log(`📁 Fichier dans dossier: ${isInMovieFolder ? 'Oui' : 'Non'}`)
+      console.log(`📍 Répertoire source: ${fileDir}`)
+      
+      // Extraire les informations du nom de fichier ou dossier
+      const movieInfo = isInMovieFolder ? 
+        this.extractMovieInfo(path.basename(fileDir)) : 
+        this.extractMovieInfo(filePath)
+      
       console.log('📝 Info extraite:', movieInfo)
       
       // Rechercher les métadonnées sur TMDB
@@ -331,15 +266,21 @@ class MediaOrganizer {
       // Créer le dossier s'il n'existe pas
       await fs.promises.mkdir(targetFolder, { recursive: true })
       
-      // Déplacer le fichier vidéo
-      const fileExtension = path.extname(filePath)
-      const targetFileName = `${sanitizedFolderName}${fileExtension}`
-      const targetPath = path.join(targetFolder, targetFileName)
-      
-      await fs.promises.copyFile(filePath, targetPath)
-      await fs.promises.unlink(filePath)
-      
-      console.log(`📦 Fichier déplacé: ${targetPath}`)
+      if (isInMovieFolder) {
+        // Déplacer tout le dossier du film
+        console.log(`📦 Déplacement du dossier complet: ${path.basename(fileDir)}`)
+        await this.moveMovieFolder(fileDir, targetFolder)
+      } else {
+        // Déplacer seulement le fichier vidéo
+        console.log(`📦 Déplacement du fichier seul: ${fileName}`)
+        const fileExtension = path.extname(filePath)
+        const targetFileName = `${sanitizedFolderName}${fileExtension}`
+        const targetPath = path.join(targetFolder, targetFileName)
+        
+        await fs.promises.copyFile(filePath, targetPath)
+        await fs.promises.unlink(filePath)
+        console.log(`📦 Fichier déplacé: ${targetPath}`)
+      }
       
       // Enregistrer les informations du film traité
       this.processedMovies.set(filePath, {
@@ -360,6 +301,41 @@ class MediaOrganizer {
       
     } catch (error) {
       console.error('❌ Erreur lors du traitement du film:', error.message)
+    }
+  }
+
+  // Vérifier si un fichier vidéo est dans un dossier de film
+  isInMovieFolder(filePath) {
+    const fileDir = path.dirname(filePath)
+    const parentDir = path.dirname(fileDir)
+    
+    // Vérifier si on est dans un sous-dossier des dossiers surveillés
+    const isInWatchFolder = WATCH_FOLDERS.some(watchFolder => 
+      fileDir.startsWith(watchFolder) && fileDir !== watchFolder
+    )
+    
+    return isInWatchFolder
+  }
+
+  // Déplacer tout un dossier de film
+  async moveMovieFolder(sourceFolder, targetFolder) {
+    try {
+      console.log(`📁 Copie du dossier: ${sourceFolder} -> ${targetFolder}`)
+      
+      // Copier récursivement tout le contenu
+      await fs.copy(sourceFolder, targetFolder, {
+        overwrite: true,
+        preserveTimestamps: true
+      })
+      
+      // Supprimer le dossier source après copie réussie
+      await fs.remove(sourceFolder)
+      
+      console.log(`✅ Dossier déplacé avec succès`)
+      
+    } catch (error) {
+      console.error('❌ Erreur lors du déplacement du dossier:', error.message)
+      throw error
     }
   }
 
