@@ -60,17 +60,7 @@ const VideoCard = ({ video }) => {
     `http://localhost:5000/api/image/${encodeURIComponent(video.path)}?type=poster` : 
     null
 
-  // Debug logs
-  console.log('VideoCard Debug:', {
-    videoName: video.name,
-    videoPath: video.path,
-    hasImages: !!video.images,
-    images: video.images,
-    posterUrl: posterUrl,
-    title: video.title,
-    year: video.year,
-    rating: video.rating
-  })
+
 
   return (
     <div className="group relative bg-netflix-gray rounded-lg overflow-hidden shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 cursor-pointer">
@@ -83,20 +73,13 @@ const VideoCard = ({ video }) => {
               imageLoaded ? 'opacity-100' : 'opacity-0'
             }`}
             onLoad={() => {
-              console.log('✅ Poster chargé avec succès:', posterUrl)
               setImageLoaded(true)
             }}
-            onError={(e) => {
-              console.error('❌ Erreur chargement poster:', posterUrl, e)
+            onError={() => {
               setImageError(true)
             }}
           />
-        ) : (
-          (() => {
-            console.log('⚠️ Pas de poster URL:', { posterUrl, hasImages: !!video.images, images: video.images })
-            return null
-          })()
-        )}
+        ) : null}
         
         {/* Overlay par défaut si pas d'image */}
         <div className={`absolute inset-0 bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center ${
@@ -106,10 +89,6 @@ const VideoCard = ({ video }) => {
             <Play className="w-12 h-12 text-white opacity-60 mx-auto mb-2" />
             <p className="text-white text-sm font-medium line-clamp-3">
               {video.title || video.displayName}
-            </p>
-            {/* Debug info */}
-            <p className="text-xs text-gray-500 mt-2">
-              {posterUrl ? 'Poster en cours...' : 'Pas de poster'}
             </p>
           </div>
         </div>

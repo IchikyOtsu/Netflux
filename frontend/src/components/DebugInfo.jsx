@@ -20,16 +20,15 @@ const DebugInfo = () => {
       const contentType = response.headers.get('content-type')
       if (!contentType || !contentType.includes('application/json')) {
         const text = await response.text()
-        console.error('❌ Réponse non-JSON:', text.substring(0, 200))
+        console.error('Réponse non-JSON:', text.substring(0, 200))
         throw new Error('Réponse non-JSON reçue')
       }
       
       const data = await response.json()
-      console.log('🧪 Debug - Données API reçues:', data)
       setVideos(data)
       setError(null)
     } catch (error) {
-      console.error('❌ Erreur fetch videos:', error)
+      console.error('Erreur fetch videos:', error)
       setError(error.message)
     } finally {
       setLoading(false)
@@ -38,41 +37,29 @@ const DebugInfo = () => {
 
   const testPosterUrl = (video) => {
     const url = `/api/image/${encodeURIComponent(video.path)}?type=poster`
-    console.log('🧪 Test URL poster:', url)
     
     // Test avec fetch pour voir la réponse exacte
     fetch(url)
       .then(response => {
-        console.log('🧪 Réponse poster:', response.status, response.statusText)
         if (!response.ok) {
           return response.text().then(text => {
-            console.error('❌ Erreur poster détails:', text)
+            console.error('Erreur poster détails:', text)
           })
         }
-        console.log('✅ Poster OK pour:', video.name)
       })
-      .catch(err => console.error('❌ Erreur réseau poster:', err))
+      .catch(err => console.error('Erreur réseau poster:', err))
   }
 
   const debugImagePath = (video) => {
     // Utiliser le port backend directement
     const debugUrl = `http://localhost:5000/api/debug/images/${encodeURIComponent(video.path)}?type=poster`
-    console.log('🧪 Debug URL:', debugUrl)
     
     fetch(debugUrl)
       .then(response => response.json())
       .then(data => {
-        console.log('🧪 Debug images:', data)
-        console.log('🧪 Debug détaillé:')
-        console.log('   - moviePath:', data.debug.moviePath)
-        console.log('   - movieDir:', data.debug.movieDir)
-        console.log('   - imagePath:', data.debug.imagePath)
-        console.log('   - imageExists:', data.debug.imageExists)
-        console.log('   - folderExists:', data.debug.folderExists)
-        console.log('   - folderContents:', data.debug.folderContents)
         alert(`Debug Images:\n${JSON.stringify(data.debug, null, 2)}`)
       })
-      .catch(err => console.error('❌ Erreur debug:', err))
+      .catch(err => console.error('Erreur debug:', err))
   }
 
   if (loading) return <div className="text-white">Chargement debug...</div>
