@@ -1,5 +1,6 @@
 import { RefreshCw, AlertCircle, Film } from 'lucide-react'
 import VideoCard from '../components/VideoCard'
+import DebugInfo from '../components/DebugInfo'
 
 const HomePage = ({ videos, loading, error, onRefresh }) => {
   if (loading) {
@@ -32,6 +33,9 @@ const HomePage = ({ videos, loading, error, onRefresh }) => {
 
   return (
     <div className="min-h-screen">
+      {/* Debug Info - Temporaire */}
+      <DebugInfo />
+      
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-netflix-black to-netflix-gray py-16 px-6">
         <div className="max-w-7xl mx-auto">

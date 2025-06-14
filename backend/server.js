@@ -31,6 +31,53 @@ const isVideoFile = (filename) => {
   return VIDEO_EXTENSIONS.includes(ext)
 }
 
+// Fonction pour lire les métadonnées TMDB depuis le fichier movie.nfo
+const getMovieInfo = (movieDir) => {
+  try {
+    const nfoPath = path.join(movieDir, 'movie.nfo')
+    console.log(`🔍 Recherche NFO dans: ${movieDir}`)
+    console.log(`📄 Chemin NFO: ${nfoPath}`)
+    console.log(`📄 NFO existe: ${fs.existsSync(nfoPath)}`)
+    
+    if (fs.existsSync(nfoPath)) {
+      const nfoContent = fs.readFileSync(nfoPath, 'utf8')
+      console.log(`📄 Contenu NFO (${nfoContent.length} caractères):`, nfoContent.substring(0, 200) + '...')
+      const parsed = JSON.parse(nfoContent)
+      console.log(`✅ NFO parsé avec succès:`, {
+        displayTitle: parsed.displayTitle,
+        year: parsed.displayYear,
+        tmdbTitle: parsed.tmdb?.title
+      })
+      return parsed
+    }
+  } catch (error) {
+    console.error('❌ Erreur lecture movie.nfo:', error.message)
+  }
+  return null
+}
+
+// Fonction pour vérifier si des images existent
+const getMovieImages = (movieDir) => {
+  const images = {}
+  
+  const posterPath = path.join(movieDir, 'poster.jpg')
+  const fanartPath = path.join(movieDir, 'fanart.jpg')
+  
+  console.log(`🖼️ Recherche images dans: ${movieDir}`)
+  console.log(`📸 Poster existe: ${fs.existsSync(posterPath)}`)
+  console.log(`🖼️ Fanart existe: ${fs.existsSync(fanartPath)}`)
+  
+  if (fs.existsSync(posterPath)) {
+    images.poster = 'poster.jpg'
+  }
+  if (fs.existsSync(fanartPath)) {
+    images.fanart = 'fanart.jpg'
+  }
+  
+  console.log(`🖼️ Images trouvées:`, Object.keys(images))
+  return images
+}
+
 // Fonction pour obtenir les métadonnées d'une vidéo avec ffprobe
 const getVideoMetadata = async (filePath) => {
   try {
@@ -121,20 +168,18 @@ app.get('/api/videos', async (req, res) => {
     console.log(`📁 Fichiers trouvés:`)
     videoFiles.forEach(file => {
       console.log(`   - ${file.path} (dans ${file.directory})`)
+      console.log(`     Métadonnées TMDB: ${file.movieInfo ? 'Oui' : 'Non'}`)
+      console.log(`     Images: ${Object.keys(file.images || {}).join(', ') || 'Aucune'}`)
     })
     
-    // Ajouter des métadonnées basiques
+    // Ajouter seulement les métadonnées techniques (FFProbe)
     const videosWithMetadata = await Promise.all(
       videoFiles.map(async (file) => {
-        const metadata = await getVideoMetadata(file.fullPath)
+        const technicalMetadata = await getVideoMetadata(file.fullPath)
+        
         return {
-          name: file.name,
-          path: file.path, // Chemin relatif complet pour l'API
-          displayName: file.displayName,
-          directory: file.directory,
-          size: file.size,
-          modified: file.modified,
-          ...metadata
+          ...file, // Inclut déjà movieInfo, images, title, year, overview, rating, genres
+          ...technicalMetadata // Ajoute duration, resolution, codec, etc.
         }
       })
     )
@@ -169,14 +214,32 @@ app.get('/api/videos/:filename/metadata', async (req, res) => {
     const stats = fs.statSync(filePath)
     const metadata = await getVideoMetadata(filePath)
     
+    // Récupérer les métadonnées TMDB et images
+    const movieDir = path.dirname(filePath)
+    const movieInfo = getMovieInfo(movieDir)
+    const images = getMovieImages(movieDir)
+    
     res.json({
       name: path.basename(filename),
       path: filename,
-      displayName: path.parse(path.basename(filename)).name,
+      displayName: movieInfo?.displayTitle || path.parse(path.basename(filename)).name,
       directory: path.dirname(filename),
       size: stats.size,
       modified: stats.mtime,
-      ...metadata
+      
+      // Métadonnées techniques
+      ...metadata,
+      
+      // Métadonnées TMDB
+      movieInfo: movieInfo,
+      images: images,
+      
+      // Informations d'affichage
+      title: movieInfo?.displayTitle || path.parse(path.basename(filename)).name,
+      year: movieInfo?.displayYear || movieInfo?.extractedYear,
+      overview: movieInfo?.tmdb?.overview,
+      rating: movieInfo?.tmdb?.voteAverage,
+      genres: movieInfo?.tmdb?.genres || []
     })
   } catch (error) {
     console.error('Erreur lors de la récupération des métadonnées:', error)
@@ -339,35 +402,4 @@ app.listen(PORT, '0.0.0.0', () => {
   } else {
     console.warn(`⚠️  Le dossier média ${MEDIA_PATH} n'existe pas`)
   }
-})
-
-// Fonction pour lire les métadonnées TMDB depuis le fichier movie.nfo
-const getMovieInfo = (movieDir) => {
-  try {
-    const nfoPath = path.join(movieDir, 'movie.nfo')
-    if (fs.existsSync(nfoPath)) {
-      const nfoContent = fs.readFileSync(nfoPath, 'utf8')
-      return JSON.parse(nfoContent)
-    }
-  } catch (error) {
-    console.error('Erreur lecture movie.nfo:', error.message)
-  }
-  return null
-}
-
-// Fonction pour vérifier si des images existent
-const getMovieImages = (movieDir) => {
-  const images = {}
-  
-  const posterPath = path.join(movieDir, 'poster.jpg')
-  const fanartPath = path.join(movieDir, 'fanart.jpg')
-  
-  if (fs.existsSync(posterPath)) {
-    images.poster = 'poster.jpg'
-  }
-  if (fs.existsSync(fanartPath)) {
-    images.fanart = 'fanart.jpg'
-  }
-  
-  return images
-} 
+}) 
