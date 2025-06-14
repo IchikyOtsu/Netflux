@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Play, Clock, HardDrive, Folder, Star, Calendar } from 'lucide-react'
+import { Play, Clock, HardDrive, Folder, Star, Calendar, Languages, Subtitles } from 'lucide-react'
 
 const VideoCard = ({ video }) => {
   const navigate = useNavigate()
@@ -26,6 +26,33 @@ const VideoCard = ({ video }) => {
       return `${hours}h ${minutes}m`
     }
     return `${minutes}m`
+  }
+
+  // Fonction pour convertir les codes de langue en noms lisibles
+  const getLanguageName = (code) => {
+    const languages = {
+      'en': 'EN',
+      'fr': 'FR',
+      'es': 'ES',
+      'de': 'DE',
+      'it': 'IT',
+      'pt': 'PT',
+      'ru': 'RU',
+      'ja': 'JP',
+      'ko': 'KR',
+      'zh': 'CN',
+      'ar': 'AR',
+      'hi': 'HI',
+      'th': 'TH',
+      'tr': 'TR',
+      'pl': 'PL',
+      'nl': 'NL',
+      'sv': 'SV',
+      'da': 'DA',
+      'no': 'NO',
+      'fi': 'FI'
+    }
+    return languages[code] || code?.toUpperCase() || 'VO'
   }
 
   // Utiliser le poster TMDB si disponible
@@ -152,13 +179,29 @@ const VideoCard = ({ video }) => {
           </div>
         </div>
 
-        {video.resolution && (
-          <div className="mt-2">
+        {/* Tags : résolution, langue, sous-titres */}
+        <div className="mt-2 flex flex-wrap gap-1">
+          {video.resolution && (
             <span className="inline-block bg-gray-700 text-xs px-2 py-1 rounded">
               {video.resolution}
             </span>
-          </div>
-        )}
+          )}
+          
+          {video.originalLanguage && (
+            <span className="inline-block bg-blue-600 text-xs px-2 py-1 rounded flex items-center space-x-1">
+              <Languages className="w-3 h-3" />
+              <span>{getLanguageName(video.originalLanguage)}</span>
+            </span>
+          )}
+          
+          {video.subtitles && video.subtitles.length > 0 && 
+           video.subtitles.some(sub => sub.language !== 'unknown') && (
+            <span className="inline-block bg-green-600 text-xs px-2 py-1 rounded flex items-center space-x-1">
+              <Subtitles className="w-3 h-3" />
+              <span>{video.subtitles.filter(sub => sub.language !== 'unknown').length} ST</span>
+            </span>
+          )}
+        </div>
       </div>
     </div>
   )
