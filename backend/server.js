@@ -1,0 +1,240 @@
+const express = require('express')
+const cors = require('cors')
+const helmet = require('helmet')
+const morgan = require('morgan')
+const path = require('path')
+const fs = require('fs')
+const ffprobe = require('ffprobe')
+const ffprobeStatic = require('ffprobe-static')
+const mime = require('mime-types')
+require('dotenv').config()
+
+const app = express()
+const PORT = process.env.PORT || 5000
+const MEDIA_PATH = process.env.MEDIA_PATH || '/media'
+
+// Middleware
+app.use(helmet({
+  crossOriginResourcePolicy: false,
+  contentSecurityPolicy: false
+}))
+app.use(cors())
+app.use(morgan('combined'))
+app.use(express.json())
+
+// Extensions vidéo supportées
+const VIDEO_EXTENSIONS = ['.mp4', '.mkv', '.avi', '.mov', '.wmv', '.flv', '.webm', '.m4v']
+
+// Fonction pour vérifier si un fichier est une vidéo
+const isVideoFile = (filename) => {
+  const ext = path.extname(filename).toLowerCase()
+  return VIDEO_EXTENSIONS.includes(ext)
+}
+
+// Fonction pour obtenir les métadonnées d'une vidéo avec ffprobe
+const getVideoMetadata = async (filePath) => {
+  try {
+    const metadata = await ffprobe(filePath, { path: ffprobeStatic.path })
+    
+    const videoStream = metadata.streams.find(stream => stream.codec_type === 'video')
+    const audioStream = metadata.streams.find(stream => stream.codec_type === 'audio')
+    
+    return {
+      duration: parseFloat(metadata.format.duration) || 0,
+      size: parseInt(metadata.format.size) || 0,
+      bitrate: parseInt(metadata.format.bit_rate) || 0,
+      resolution: videoStream ? `${videoStream.width}x${videoStream.height}` : null,
+      codec: videoStream ? videoStream.codec_name : null,
+      fps: videoStream ? eval(videoStream.r_frame_rate) : null
+    }
+  } catch (error) {
+    console.error('Erreur lors de l\'analyse ffprobe:', error)
+    return null
+  }
+}
+
+// Fonction pour lister les fichiers récursivement
+const getVideoFiles = (dirPath, baseDir = dirPath) => {
+  let files = []
+  
+  try {
+    const items = fs.readdirSync(dirPath)
+    
+    for (const item of items) {
+      const fullPath = path.join(dirPath, item)
+      const stat = fs.statSync(fullPath)
+      
+      if (stat.isDirectory()) {
+        // Récursion dans les sous-dossiers
+        files = files.concat(getVideoFiles(fullPath, baseDir))
+      } else if (stat.isFile() && isVideoFile(item)) {
+        const relativePath = path.relative(baseDir, fullPath)
+        files.push({
+          name: item,
+          path: relativePath,
+          fullPath: fullPath,
+          size: stat.size,
+          modified: stat.mtime
+        })
+      }
+    }
+  } catch (error) {
+    console.error('Erreur lors de la lecture du dossier:', error)
+  }
+  
+  return files
+}
+
+// Route: Lister les vidéos
+app.get('/api/videos', async (req, res) => {
+  try {
+    console.log('Scanning media directory:', MEDIA_PATH)
+    
+    if (!fs.existsSync(MEDIA_PATH)) {
+      return res.status(404).json({ 
+        error: 'Dossier média non trouvé',
+        path: MEDIA_PATH 
+      })
+    }
+    
+    const videoFiles = getVideoFiles(MEDIA_PATH)
+    
+    // Ajouter des métadonnées basiques
+    const videosWithMetadata = await Promise.all(
+      videoFiles.map(async (file) => {
+        const metadata = await getVideoMetadata(file.fullPath)
+        return {
+          name: file.name,
+          path: file.path,
+          displayName: path.parse(file.name).name,
+          size: file.size,
+          modified: file.modified,
+          ...metadata
+        }
+      })
+    )
+    
+    // Trier par date de modification (plus récent en premier)
+    videosWithMetadata.sort((a, b) => new Date(b.modified) - new Date(a.modified))
+    
+    res.json(videosWithMetadata)
+  } catch (error) {
+    console.error('Erreur lors de la récupération des vidéos:', error)
+    res.status(500).json({ error: 'Erreur serveur' })
+  }
+})
+
+// Route: Obtenir les métadonnées d'une vidéo spécifique
+app.get('/api/videos/:filename/metadata', async (req, res) => {
+  try {
+    const filename = decodeURIComponent(req.params.filename)
+    const filePath = path.join(MEDIA_PATH, filename)
+    
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'Fichier non trouvé' })
+    }
+    
+    const stats = fs.statSync(filePath)
+    const metadata = await getVideoMetadata(filePath)
+    
+    res.json({
+      name: filename,
+      displayName: path.parse(filename).name,
+      size: stats.size,
+      modified: stats.mtime,
+      ...metadata
+    })
+  } catch (error) {
+    console.error('Erreur lors de la récupération des métadonnées:', error)
+    res.status(500).json({ error: 'Erreur serveur' })
+  }
+})
+
+// Route: Streaming vidéo avec support du range
+app.get('/api/video/:filename', (req, res) => {
+  try {
+    const filename = decodeURIComponent(req.params.filename)
+    const filePath = path.join(MEDIA_PATH, filename)
+    
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'Fichier non trouvé' })
+    }
+    
+    const stat = fs.statSync(filePath)
+    const fileSize = stat.size
+    const range = req.headers.range
+    
+    if (range) {
+      // Support du streaming progressif
+      const parts = range.replace(/bytes=/, "").split("-")
+      const start = parseInt(parts[0], 10)
+      const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1
+      const chunksize = (end - start) + 1
+      
+      const file = fs.createReadStream(filePath, { start, end })
+      const head = {
+        'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+        'Accept-Ranges': 'bytes',
+        'Content-Length': chunksize,
+        'Content-Type': mime.lookup(filePath) || 'video/mp4',
+      }
+      
+      res.writeHead(206, head)
+      file.pipe(res)
+    } else {
+      // Streaming complet
+      const head = {
+        'Content-Length': fileSize,
+        'Content-Type': mime.lookup(filePath) || 'video/mp4',
+      }
+      
+      res.writeHead(200, head)
+      fs.createReadStream(filePath).pipe(res)
+    }
+  } catch (error) {
+    console.error('Erreur lors du streaming:', error)
+    res.status(500).json({ error: 'Erreur serveur' })
+  }
+})
+
+// Route: Générer/servir les miniatures (optionnel)
+app.get('/api/thumbnail/:filename', (req, res) => {
+  // Pour l'instant, retourner une image par défaut ou une erreur 404
+  res.status(404).json({ error: 'Miniatures non implémentées' })
+})
+
+// Route: Health check
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    mediaPath: MEDIA_PATH,
+    mediaExists: fs.existsSync(MEDIA_PATH)
+  })
+})
+
+// Middleware de gestion des erreurs
+app.use((err, req, res, next) => {
+  console.error(err.stack)
+  res.status(500).json({ error: 'Erreur serveur interne' })
+})
+
+// Middleware pour les routes non trouvées
+app.use((req, res) => {
+  res.status(404).json({ error: 'Route non trouvée' })
+})
+
+// Démarrage du serveur
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Serveur Netflux démarré sur le port ${PORT}`)
+  console.log(`📁 Dossier média: ${MEDIA_PATH}`)
+  console.log(`🎬 Extensions supportées: ${VIDEO_EXTENSIONS.join(', ')}`)
+  
+  // Vérifier si le dossier média existe
+  if (fs.existsSync(MEDIA_PATH)) {
+    const videoFiles = getVideoFiles(MEDIA_PATH)
+    console.log(`📺 ${videoFiles.length} fichier(s) vidéo trouvé(s)`)
+  } else {
+    console.warn(`⚠️  Le dossier média ${MEDIA_PATH} n'existe pas`)
+  }
+}) 
