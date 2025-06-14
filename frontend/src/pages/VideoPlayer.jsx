@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import ReactPlayer from 'react-player'
-import { ArrowLeft, Volume2, VolumeX, Maximize, Minimize, AlertCircle } from 'lucide-react'
+import { ArrowLeft, Volume2, VolumeX, Maximize, Minimize, AlertCircle, Star, Calendar, Clock } from 'lucide-react'
 import { getVideoStreamUrl, getVideoMetadata } from '../services/api'
 
 const VideoPlayer = () => {
@@ -78,6 +78,11 @@ const VideoPlayer = () => {
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
   }
 
+  // URL de la bannière si disponible
+  const fanartUrl = metadata?.images?.fanart ? 
+    `/api/image/${encodeURIComponent(filename)}?type=fanart` : 
+    null
+
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -92,24 +97,61 @@ const VideoPlayer = () => {
   return (
     <div className="min-h-screen bg-black">
       <div className="relative">
-        {/* Header */}
-        <div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-black to-transparent p-6">
-          <div className="flex items-center justify-between">
-            <button
-              onClick={handleBack}
-              className="flex items-center space-x-2 text-white hover:text-netflix-red transition-colors"
-            >
-              <ArrowLeft className="w-6 h-6" />
-              <span>Retour</span>
-            </button>
+        {/* Header avec bannière en arrière-plan */}
+        <div className="relative">
+          {fanartUrl && (
+            <div className="absolute inset-0 z-0">
+              <img 
+                src={fanartUrl} 
+                alt="Bannière" 
+                className="w-full h-full object-cover opacity-30"
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-black via-black/50 to-black"></div>
+            </div>
+          )}
+          
+          <div className="relative z-10 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <button
+                onClick={handleBack}
+                className="flex items-center space-x-2 text-white hover:text-netflix-red transition-colors"
+              >
+                <ArrowLeft className="w-6 h-6" />
+                <span>Retour</span>
+              </button>
+            </div>
             
-            <div className="text-white text-center">
-              <h1 className="text-lg font-semibold">
-                {metadata?.displayName || (metadata?.name && metadata.name.replace(/\.[^/.]+$/, "")) || 'Vidéo'}
+            <div className="max-w-4xl">
+              <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                {metadata?.title || metadata?.displayName || (metadata?.name && metadata.name.replace(/\.[^/.]+$/, "")) || 'Vidéo'}
               </h1>
-              {metadata?.directory && metadata.directory !== '.' && (
-                <p className="text-sm text-gray-400">
-                  {metadata.directory}
+              
+              <div className="flex items-center space-x-6 mb-4">
+                {metadata?.year && (
+                  <div className="flex items-center space-x-2">
+                    <Calendar className="w-5 h-5 text-gray-400" />
+                    <span className="text-white">{metadata.year}</span>
+                  </div>
+                )}
+                
+                {metadata?.rating && (
+                  <div className="flex items-center space-x-2">
+                    <Star className="w-5 h-5 text-yellow-400 fill-current" />
+                    <span className="text-white">{Math.round(metadata.rating * 10) / 10}/10</span>
+                  </div>
+                )}
+                
+                {metadata?.duration && (
+                  <div className="flex items-center space-x-2">
+                    <Clock className="w-5 h-5 text-gray-400" />
+                    <span className="text-white">{formatTime(metadata.duration)}</span>
+                  </div>
+                )}
+              </div>
+              
+              {metadata?.overview && (
+                <p className="text-gray-300 text-lg leading-relaxed max-w-3xl">
+                  {metadata.overview}
                 </p>
               )}
             </div>
@@ -160,15 +202,13 @@ const VideoPlayer = () => {
           )}
         </div>
 
-        {/* Video Info */}
+        {/* Video Info détaillées */}
         {metadata && (
           <div className="p-6 bg-netflix-black">
             <div className="max-w-4xl mx-auto">
-              <h2 className="text-2xl font-bold text-white mb-4">
-                {metadata.displayName || metadata.name?.replace(/\.[^/.]+$/, "") || 'Vidéo'}
-              </h2>
+              <h2 className="text-xl font-bold text-white mb-6">Informations techniques</h2>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-gray-300">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-gray-300">
                 <div>
                   <h3 className="text-sm font-semibold text-gray-400 mb-2">DURÉE</h3>
                   <p>{formatTime(metadata.duration)}</p>
@@ -183,7 +223,19 @@ const VideoPlayer = () => {
                   <h3 className="text-sm font-semibold text-gray-400 mb-2">RÉSOLUTION</h3>
                   <p>{metadata.resolution || 'N/A'}</p>
                 </div>
+                
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-400 mb-2">CODEC</h3>
+                  <p>{metadata.codec || 'N/A'}</p>
+                </div>
               </div>
+              
+              {metadata.directory && metadata.directory !== '.' && (
+                <div className="mt-6 pt-6 border-t border-gray-700">
+                  <h3 className="text-sm font-semibold text-gray-400 mb-2">DOSSIER</h3>
+                  <p className="text-gray-300">{metadata.directory}</p>
+                </div>
+              )}
             </div>
           </div>
         )}

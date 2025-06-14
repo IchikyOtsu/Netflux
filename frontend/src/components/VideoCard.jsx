@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Play, Clock, HardDrive, Folder } from 'lucide-react'
+import { Play, Clock, HardDrive, Folder, Star, Calendar } from 'lucide-react'
 
 const VideoCard = ({ video }) => {
   const navigate = useNavigate()
@@ -28,13 +28,18 @@ const VideoCard = ({ video }) => {
     return `${minutes}m`
   }
 
+  // Utiliser le poster TMDB si disponible
+  const posterUrl = video.images?.poster ? 
+    `/api/image/${encodeURIComponent(video.path)}?type=poster` : 
+    null
+
   return (
     <div className="group relative bg-netflix-gray rounded-lg overflow-hidden shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 cursor-pointer">
-      <div className="aspect-video bg-gray-800 relative overflow-hidden">
-        {!imageError ? (
+      <div className="aspect-[2/3] bg-gray-800 relative overflow-hidden">
+        {posterUrl && !imageError ? (
           <img
-            src={`/api/thumbnail/${encodeURIComponent(video.path)}`}
-            alt={video.displayName}
+            src={posterUrl}
+            alt={video.title || video.displayName}
             className={`w-full h-full object-cover transition-opacity duration-300 ${
               imageLoaded ? 'opacity-100' : 'opacity-0'
             }`}
@@ -45,9 +50,14 @@ const VideoCard = ({ video }) => {
         
         {/* Overlay par défaut si pas d'image */}
         <div className={`absolute inset-0 bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center ${
-          imageError || !imageLoaded ? 'opacity-100' : 'opacity-0'
+          imageError || !posterUrl || !imageLoaded ? 'opacity-100' : 'opacity-0'
         } transition-opacity duration-300`}>
-          <Play className="w-12 h-12 text-white opacity-60" />
+          <div className="text-center p-4">
+            <Play className="w-12 h-12 text-white opacity-60 mx-auto mb-2" />
+            <p className="text-white text-sm font-medium line-clamp-3">
+              {video.title || video.displayName}
+            </p>
+          </div>
         </div>
 
         {/* Overlay de hover */}
@@ -59,18 +69,47 @@ const VideoCard = ({ video }) => {
             <Play className="w-8 h-8 ml-1" />
           </button>
         </div>
+
+        {/* Badge de note TMDB */}
+        {video.rating && (
+          <div className="absolute top-2 right-2 bg-black bg-opacity-70 rounded-full px-2 py-1 flex items-center space-x-1">
+            <Star className="w-3 h-3 text-yellow-400 fill-current" />
+            <span className="text-white text-xs font-medium">
+              {Math.round(video.rating * 10) / 10}
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="p-4">
         <h3 className="text-white font-semibold text-lg mb-2 line-clamp-2 group-hover:text-netflix-red transition-colors">
-          {video.displayName || video.name}
+          {video.title || video.displayName}
         </h3>
         
-        {video.directory && video.directory !== '.' && (
-          <div className="flex items-center space-x-2 mb-2">
-            <Folder className="w-4 h-4 text-gray-500" />
-            <span className="text-sm text-gray-500">{video.directory}</span>
-          </div>
+        {/* Année et dossier */}
+        <div className="flex items-center justify-between mb-2">
+          {video.year && (
+            <div className="flex items-center space-x-1">
+              <Calendar className="w-4 h-4 text-gray-500" />
+              <span className="text-sm text-gray-400">{video.year}</span>
+            </div>
+          )}
+          
+          {video.directory && video.directory !== '.' && (
+            <div className="flex items-center space-x-1">
+              <Folder className="w-4 h-4 text-gray-500" />
+              <span className="text-xs text-gray-500 truncate max-w-20">
+                {video.directory}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Description TMDB */}
+        {video.overview && (
+          <p className="text-sm text-gray-400 line-clamp-2 mb-3">
+            {video.overview}
+          </p>
         )}
         
         <div className="flex items-center justify-between text-sm text-gray-400">

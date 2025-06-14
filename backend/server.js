@@ -69,15 +69,32 @@ const getVideoFiles = (dirPath, baseDir = dirPath) => {
         files = files.concat(getVideoFiles(fullPath, baseDir))
       } else if (stat.isFile() && isVideoFile(item)) {
         const relativePath = path.relative(baseDir, fullPath)
+        const movieDir = path.dirname(fullPath)
+        
+        // Lire les métadonnées TMDB si disponibles
+        const movieInfo = getMovieInfo(movieDir)
+        const images = getMovieImages(movieDir)
+        
         // Utiliser le chemin relatif comme identifiant unique
         files.push({
           name: item, // Nom du fichier seulement
           path: relativePath, // Chemin relatif complet depuis media/
           fullPath: fullPath,
-          displayName: path.parse(item).name, // Nom sans extension
+          displayName: movieInfo?.displayTitle || path.parse(item).name, // Nom TMDB ou nom de fichier
           directory: path.dirname(relativePath), // Dossier parent
           size: stat.size,
-          modified: stat.mtime
+          modified: stat.mtime,
+          
+          // Métadonnées TMDB
+          movieInfo: movieInfo,
+          images: images,
+          
+          // Informations d'affichage améliorées
+          title: movieInfo?.displayTitle || path.parse(item).name,
+          year: movieInfo?.displayYear || movieInfo?.extractedYear,
+          overview: movieInfo?.tmdb?.overview,
+          rating: movieInfo?.tmdb?.voteAverage,
+          genres: movieInfo?.tmdb?.genres || []
         })
       }
     }
@@ -241,6 +258,53 @@ app.get('/api/thumbnail/:filename', (req, res) => {
   res.status(404).json({ error: 'Miniatures non implémentées' })
 })
 
+// Route: Servir les images des films (poster, fanart)
+app.get('/api/image/:moviePath(*)', (req, res) => {
+  try {
+    const moviePath = decodeURIComponent(req.params.moviePath)
+    const imageType = req.query.type || 'poster' // poster ou fanart
+    
+    // Construire le chemin vers le dossier du film
+    const movieDir = path.join(MEDIA_PATH, path.dirname(moviePath))
+    const imageName = imageType === 'fanart' ? 'fanart.jpg' : 'poster.jpg'
+    const imagePath = path.join(movieDir, imageName)
+    
+    console.log('🖼️ Demande d\'image:')
+    console.log('   - Chemin film:', moviePath)
+    console.log('   - Type:', imageType)
+    console.log('   - Dossier film:', movieDir)
+    console.log('   - Chemin image:', imagePath)
+    console.log('   - Existe:', fs.existsSync(imagePath))
+    
+    if (!fs.existsSync(imagePath)) {
+      return res.status(404).json({ 
+        error: 'Image non trouvée',
+        path: imagePath,
+        type: imageType
+      })
+    }
+    
+    // Servir l'image avec les bons headers
+    const stat = fs.statSync(imagePath)
+    const mimeType = mime.lookup(imagePath) || 'image/jpeg'
+    
+    res.set({
+      'Content-Type': mimeType,
+      'Content-Length': stat.size,
+      'Cache-Control': 'public, max-age=86400' // Cache 24h
+    })
+    
+    fs.createReadStream(imagePath).pipe(res)
+    
+  } catch (error) {
+    console.error('❌ Erreur lors du service d\'image:', error)
+    res.status(500).json({ 
+      error: 'Erreur serveur',
+      details: error.message
+    })
+  }
+})
+
 // Route: Health check
 app.get('/api/health', (req, res) => {
   res.json({ 
@@ -275,4 +339,35 @@ app.listen(PORT, '0.0.0.0', () => {
   } else {
     console.warn(`⚠️  Le dossier média ${MEDIA_PATH} n'existe pas`)
   }
-}) 
+})
+
+// Fonction pour lire les métadonnées TMDB depuis le fichier movie.nfo
+const getMovieInfo = (movieDir) => {
+  try {
+    const nfoPath = path.join(movieDir, 'movie.nfo')
+    if (fs.existsSync(nfoPath)) {
+      const nfoContent = fs.readFileSync(nfoPath, 'utf8')
+      return JSON.parse(nfoContent)
+    }
+  } catch (error) {
+    console.error('Erreur lecture movie.nfo:', error.message)
+  }
+  return null
+}
+
+// Fonction pour vérifier si des images existent
+const getMovieImages = (movieDir) => {
+  const images = {}
+  
+  const posterPath = path.join(movieDir, 'poster.jpg')
+  const fanartPath = path.join(movieDir, 'fanart.jpg')
+  
+  if (fs.existsSync(posterPath)) {
+    images.poster = 'poster.jpg'
+  }
+  if (fs.existsSync(fanartPath)) {
+    images.fanart = 'fanart.jpg'
+  }
+  
+  return images
+} 
