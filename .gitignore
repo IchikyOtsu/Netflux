@@ -23,9 +23,9 @@ yarn-error.log*
 # Docker
 .docker/
 
-# Media files (optionnel - décommentez si vous ne voulez pas versionner vos vidéos)
-# media/
-# !media/.gitkeep
+# Media files - IMPORTANT: Ne pas versionner les fichiers médias
+media/
+!media/.gitkeep
 
 # qBittorrent config
 qbittorrent/config/
