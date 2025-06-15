@@ -174,11 +174,83 @@ const getMovieSubtitles = (movieDir) => {
 // Fonction pour obtenir les métadonnées d'une vidéo avec ffprobe
 const getVideoMetadata = async (filePath) => {
   try {
-    const metadata = await ffprobe(filePath, { path: ffprobeStatic.path })
+    // Récupérer la taille du fichier depuis le système de fichiers
+    const stats = fs.statSync(filePath)
+    const fileSize = stats.size
     
-    // Vérifier que les données sont valides
-    if (!metadata || !metadata.streams) {
-      console.warn('Métadonnées ffprobe invalides pour:', filePath)
+    // Essayer d'obtenir les métadonnées avec ffprobe
+    let duration = 0
+    let bitrate = 0
+    let resolution = null
+    let codec = null
+    let fps = null
+    
+    try {
+      const metadata = await ffprobe(filePath, { path: ffprobeStatic.path })
+      
+      if (metadata && metadata.streams) {
+        const videoStream = metadata.streams.find(stream => stream.codec_type === 'video')
+        const audioStream = metadata.streams.find(stream => stream.codec_type === 'audio')
+        
+        // Durée depuis le format ou le stream vidéo
+        if (metadata.format?.duration) {
+          duration = parseFloat(metadata.format.duration)
+        } else if (videoStream?.duration) {
+          duration = parseFloat(videoStream.duration)
+        }
+        
+        // Bitrate
+        if (metadata.format?.bit_rate) {
+          bitrate = parseInt(metadata.format.bit_rate)
+        }
+        
+        // Résolution
+        if (videoStream && videoStream.width && videoStream.height) {
+          resolution = `${videoStream.width}x${videoStream.height}`
+        }
+        
+        // Codec
+        if (videoStream?.codec_name) {
+          codec = videoStream.codec_name
+        }
+        
+        // FPS
+        if (videoStream?.r_frame_rate) {
+          try {
+            fps = eval(videoStream.r_frame_rate)
+          } catch (e) {
+            fps = null
+          }
+        }
+      }
+    } catch (ffprobeError) {
+      console.warn('Erreur ffprobe pour', path.basename(filePath), ':', ffprobeError.message)
+      // Continuer avec les valeurs par défaut
+    }
+    
+    return {
+      duration: duration,
+      size: fileSize, // Toujours depuis fs.statSync
+      bitrate: bitrate,
+      resolution: resolution,
+      codec: codec,
+      fps: fps
+    }
+  } catch (error) {
+    console.error('Erreur lors de l\'analyse des métadonnées pour', path.basename(filePath), ':', error.message)
+    
+    // Fallback : au moins récupérer la taille du fichier
+    try {
+      const stats = fs.statSync(filePath)
+      return {
+        duration: 0,
+        size: stats.size,
+        bitrate: 0,
+        resolution: null,
+        codec: null,
+        fps: null
+      }
+    } catch (statError) {
       return {
         duration: 0,
         size: 0,
@@ -188,33 +260,11 @@ const getVideoMetadata = async (filePath) => {
         fps: null
       }
     }
-    
-    const videoStream = metadata.streams.find(stream => stream.codec_type === 'video')
-    const audioStream = metadata.streams.find(stream => stream.codec_type === 'audio')
-    
-    return {
-      duration: metadata.format?.duration ? parseFloat(metadata.format.duration) : 0,
-      size: metadata.format?.size ? parseInt(metadata.format.size) : 0,
-      bitrate: metadata.format?.bit_rate ? parseInt(metadata.format.bit_rate) : 0,
-      resolution: videoStream ? `${videoStream.width}x${videoStream.height}` : null,
-      codec: videoStream ? videoStream.codec_name : null,
-      fps: videoStream && videoStream.r_frame_rate ? eval(videoStream.r_frame_rate) : null
-    }
-  } catch (error) {
-    console.error('Erreur lors de l\'analyse ffprobe:', error)
-    return {
-      duration: 0,
-      size: 0,
-      bitrate: 0,
-      resolution: null,
-      codec: null,
-      fps: null
-    }
   }
 }
 
-// Fonction pour lister les fichiers récursivement
-const getVideoFiles = (dirPath, baseDir = dirPath) => {
+// Fonction pour lister les fichiers récursivement avec filtrage
+const getVideoFiles = (dirPath, baseDir = dirPath, options = {}) => {
   let files = []
   
   try {
@@ -225,11 +275,34 @@ const getVideoFiles = (dirPath, baseDir = dirPath) => {
       const stat = fs.statSync(fullPath)
       
       if (stat.isDirectory()) {
+        const relativeDirPath = path.relative(baseDir, fullPath)
+        
+        // Filtrer les dossiers selon les options
+        if (options.excludeDownloads && (item.toLowerCase() === 'downloads' || relativeDirPath.toLowerCase().includes('downloads'))) {
+          console.log(`📁 Dossier exclu: ${relativeDirPath}`)
+          continue
+        }
+        
+        if (options.onlyFilms && !relativeDirPath.toLowerCase().startsWith('films')) {
+          continue
+        }
+        
         // Récursion dans les sous-dossiers
-        files = files.concat(getVideoFiles(fullPath, baseDir))
+        files = files.concat(getVideoFiles(fullPath, baseDir, options))
       } else if (stat.isFile() && isVideoFile(item)) {
         const relativePath = path.relative(baseDir, fullPath)
         const movieDir = path.dirname(fullPath)
+        const relativeDir = path.dirname(relativePath)
+        
+        // Filtrer les fichiers selon les options
+        if (options.excludeDownloads && relativeDir.toLowerCase().includes('downloads')) {
+          console.log(`🎬 Fichier exclu (downloads): ${relativePath}`)
+          continue
+        }
+        
+        if (options.onlyFilms && !relativeDir.toLowerCase().startsWith('films')) {
+          continue
+        }
         
         // Lire les métadonnées TMDB si disponibles
         const movieInfo = getMovieInfo(movieDir)
@@ -242,8 +315,8 @@ const getVideoFiles = (dirPath, baseDir = dirPath) => {
           path: relativePath, // Chemin relatif complet depuis media/
           fullPath: fullPath,
           displayName: movieInfo?.displayTitle || path.parse(item).name, // Nom TMDB ou nom de fichier
-          directory: path.dirname(relativePath), // Dossier parent
-          size: stat.size,
+          directory: relativeDir, // Dossier parent
+          size: stat.size, // Taille du fichier depuis fs.statSync
           modified: stat.mtime,
           
           // Métadonnées TMDB
@@ -269,10 +342,10 @@ const getVideoFiles = (dirPath, baseDir = dirPath) => {
   return files
 }
 
-// Route: Lister les vidéos
+// Route: Lister toutes les vidéos (exclut downloads)
 app.get('/api/videos', async (req, res) => {
   try {
-    console.log('Scanning media directory:', MEDIA_PATH)
+    console.log('Scanning media directory (excluding downloads):', MEDIA_PATH)
     
     if (!fs.existsSync(MEDIA_PATH)) {
       return res.status(404).json({ 
@@ -281,10 +354,11 @@ app.get('/api/videos', async (req, res) => {
       })
     }
     
-    const videoFiles = getVideoFiles(MEDIA_PATH)
-    console.log(`📁 Fichiers trouvés:`)
+    const videoFiles = getVideoFiles(MEDIA_PATH, MEDIA_PATH, { excludeDownloads: true })
+    console.log(`📁 Fichiers trouvés (hors downloads):`)
     videoFiles.forEach(file => {
       console.log(`   - ${file.path} (dans ${file.directory})`)
+      console.log(`     Taille: ${(file.size / 1024 / 1024).toFixed(2)} MB`)
       console.log(`     Métadonnées TMDB: ${file.movieInfo ? 'Oui' : 'Non'}`)
       console.log(`     Images: ${Object.keys(file.images || {}).join(', ') || 'Aucune'}`)
     })
@@ -295,8 +369,15 @@ app.get('/api/videos', async (req, res) => {
         const technicalMetadata = await getVideoMetadata(file.fullPath)
         
         return {
-          ...file, // Inclut déjà movieInfo, images, title, year, overview, rating, genres
-          ...technicalMetadata // Ajoute duration, resolution, codec, etc.
+          ...file, // Inclut déjà movieInfo, images, title, year, overview, rating, genres, size
+          // Fusionner les métadonnées techniques en préservant la taille du fichier
+          duration: technicalMetadata.duration,
+          bitrate: technicalMetadata.bitrate,
+          resolution: technicalMetadata.resolution,
+          codec: technicalMetadata.codec,
+          fps: technicalMetadata.fps,
+          // Garder la taille du fichier originale si elle est plus fiable
+          size: file.size || technicalMetadata.size
         }
       })
     )
@@ -307,6 +388,56 @@ app.get('/api/videos', async (req, res) => {
     res.json(videosWithMetadata)
   } catch (error) {
     console.error('Erreur lors de la récupération des vidéos:', error)
+    res.status(500).json({ error: 'Erreur serveur' })
+  }
+})
+
+// Route: Lister uniquement les films (dossier films)
+app.get('/api/films', async (req, res) => {
+  try {
+    console.log('Scanning films directory:', MEDIA_PATH)
+    
+    if (!fs.existsSync(MEDIA_PATH)) {
+      return res.status(404).json({ 
+        error: 'Dossier média non trouvé',
+        path: MEDIA_PATH 
+      })
+    }
+    
+    const filmFiles = getVideoFiles(MEDIA_PATH, MEDIA_PATH, { onlyFilms: true })
+    console.log(`🎬 Films trouvés:`)
+    filmFiles.forEach(file => {
+      console.log(`   - ${file.path} (dans ${file.directory})`)
+      console.log(`     Taille: ${(file.size / 1024 / 1024).toFixed(2)} MB`)
+      console.log(`     Métadonnées TMDB: ${file.movieInfo ? 'Oui' : 'Non'}`)
+      console.log(`     Images: ${Object.keys(file.images || {}).join(', ') || 'Aucune'}`)
+    })
+    
+    // Ajouter seulement les métadonnées techniques (FFProbe)
+    const filmsWithMetadata = await Promise.all(
+      filmFiles.map(async (file) => {
+        const technicalMetadata = await getVideoMetadata(file.fullPath)
+        
+        return {
+          ...file, // Inclut déjà movieInfo, images, title, year, overview, rating, genres, size
+          // Fusionner les métadonnées techniques en préservant la taille du fichier
+          duration: technicalMetadata.duration,
+          bitrate: technicalMetadata.bitrate,
+          resolution: technicalMetadata.resolution,
+          codec: technicalMetadata.codec,
+          fps: technicalMetadata.fps,
+          // Garder la taille du fichier originale si elle est plus fiable
+          size: file.size || technicalMetadata.size
+        }
+      })
+    )
+    
+    // Trier par date de modification (plus récent en premier)
+    filmsWithMetadata.sort((a, b) => new Date(b.modified) - new Date(a.modified))
+    
+    res.json(filmsWithMetadata)
+  } catch (error) {
+    console.error('Erreur lors de la récupération des films:', error)
     res.status(500).json({ error: 'Erreur serveur' })
   }
 })
@@ -342,11 +473,15 @@ app.get('/api/videos/:filename/metadata', async (req, res) => {
       path: filename,
       displayName: movieInfo?.displayTitle || path.parse(path.basename(filename)).name,
       directory: path.dirname(filename),
-      size: stats.size,
+      size: stats.size, // Taille du fichier depuis fs.statSync
       modified: stats.mtime,
       
-      // Métadonnées techniques
-      ...metadata,
+      // Métadonnées techniques FFProbe
+      duration: metadata.duration,
+      bitrate: metadata.bitrate,
+      resolution: metadata.resolution,
+      codec: metadata.codec,
+      fps: metadata.fps,
       
       // Métadonnées TMDB
       movieInfo: movieInfo,
@@ -514,18 +649,32 @@ app.get('/api/image/:moviePath(*)', (req, res) => {
     const moviePath = decodeURIComponent(req.params.moviePath)
     const imageType = req.query.type || 'poster'
     
-    // Construire le chemin vers le dossier du film
-    const movieDir = path.join(MEDIA_PATH, path.dirname(moviePath))
+    // Construire le chemin vers le dossier du film/série
+    // Pour les séries, moviePath est "series/Test" - on utilise le chemin complet
+    // Pour les films, moviePath est "films/Movie.mkv" - on prend le dirname
+    let movieDir
+    
+    // Vérifier si c'est un fichier vidéo en regardant l'extension
+    const isVideoFile = /\.(mkv|mp4|avi|mov|wmv|flv|webm|m4v)$/i.test(moviePath)
+    
+    if (isVideoFile) {
+      // C'est un fichier vidéo (film), prendre le dossier parent
+      movieDir = path.join(MEDIA_PATH, path.dirname(moviePath))
+    } else {
+      // C'est un dossier (série), utiliser le chemin complet
+      movieDir = path.join(MEDIA_PATH, moviePath)
+    }
+    
     const imageName = imageType === 'fanart' ? 'fanart.jpg' : 'poster.jpg'
     const imagePath = path.join(movieDir, imageName)
     
     console.log('🖼️ Demande d\'image:')
-    console.log('   - Chemin film:', moviePath)
+    console.log('   - Chemin reçu:', moviePath)
+    console.log('   - Est un fichier vidéo:', isVideoFile)
     console.log('   - Type:', imageType)
-    console.log('   - Dossier film:', movieDir)
+    console.log('   - Dossier calculé:', movieDir)
     console.log('   - Chemin image:', imagePath)
     console.log('   - MEDIA_PATH:', MEDIA_PATH)
-    console.log('   - path.dirname(moviePath):', path.dirname(moviePath))
     console.log('   - Dossier existe:', fs.existsSync(movieDir))
     console.log('   - Image existe:', fs.existsSync(imagePath))
     
@@ -547,7 +696,8 @@ app.get('/api/image/:moviePath(*)', (req, res) => {
         type: imageType,
         movieDir: movieDir,
         moviePath: moviePath,
-        mediaPath: MEDIA_PATH
+        mediaPath: MEDIA_PATH,
+        isVideoFile: isVideoFile
       })
     }
     
@@ -572,6 +722,45 @@ app.get('/api/image/:moviePath(*)', (req, res) => {
     console.error('❌ Erreur lors du service d\'image:', error)
     res.status(500).json({ 
       error: 'Erreur serveur',
+      details: error.message
+    })
+  }
+})
+
+// Route: Récupérer toutes les séries
+app.get('/api/series', (req, res) => {
+  try {
+    const seriesPath = path.join(MEDIA_PATH, 'series')
+    const seriesPathFr = path.join(MEDIA_PATH, 'Séries')
+    
+    console.log('📺 Recherche des séries:')
+    console.log(`   - MEDIA_PATH: ${MEDIA_PATH}`)
+    console.log(`   - Chemin series: ${seriesPath}`)
+    console.log(`   - Chemin Séries: ${seriesPathFr}`)
+    console.log(`   - series existe: ${fs.existsSync(seriesPath)}`)
+    console.log(`   - Séries existe: ${fs.existsSync(seriesPathFr)}`)
+    
+    // Essayer les deux noms de dossier
+    let finalSeriesPath = seriesPath
+    let seriesFolderName = 'series'
+    if (!fs.existsSync(seriesPath) && fs.existsSync(seriesPathFr)) {
+      finalSeriesPath = seriesPathFr
+      seriesFolderName = 'Séries'
+    }
+    
+    if (!fs.existsSync(finalSeriesPath)) {
+      console.log('⚠️ Aucun dossier de séries trouvé')
+      return res.json([]) // Retourner un tableau vide au lieu d'une erreur
+    }
+    
+    const series = getSeriesData(finalSeriesPath, seriesFolderName)
+    console.log(`✅ ${series.length} série(s) trouvée(s)`)
+    
+    res.json(series)
+  } catch (error) {
+    console.error('❌ Erreur lors de la récupération des séries:', error)
+    res.status(500).json({ 
+      error: 'Erreur lors de la récupération des séries',
       details: error.message
     })
   }
@@ -651,4 +840,98 @@ app.listen(PORT, '0.0.0.0', () => {
   } else {
     console.warn(`⚠️  Le dossier média ${MEDIA_PATH} n'existe pas`)
   }
-}) 
+})
+
+// Fonction pour détecter et organiser les séries
+const getSeriesData = (seriesPath, seriesFolderName) => {
+  const series = []
+  
+  try {
+    if (!fs.existsSync(seriesPath)) {
+      console.log(`📺 Dossier séries non trouvé: ${seriesPath}`)
+      return series
+    }
+    
+    const seriesDirectories = fs.readdirSync(seriesPath, { withFileTypes: true })
+      .filter(dirent => dirent.isDirectory())
+      .map(dirent => dirent.name)
+    
+    console.log(`📺 Séries trouvées: ${seriesDirectories.length}`)
+    
+    for (const seriesName of seriesDirectories) {
+      const seriesDir = path.join(seriesPath, seriesName)
+      const seasons = []
+      
+      // Vérifier si un poster existe
+      const posterPath = path.join(seriesDir, 'poster.jpg')
+      const hasPoster = fs.existsSync(posterPath)
+      
+      // Lire les saisons
+      const seasonDirectories = fs.readdirSync(seriesDir, { withFileTypes: true })
+        .filter(dirent => dirent.isDirectory())
+        .map(dirent => dirent.name)
+        .sort() // Trier les saisons
+      
+      for (const seasonName of seasonDirectories) {
+        const seasonDir = path.join(seriesDir, seasonName)
+        const episodes = []
+        
+        // Lire les épisodes
+        const files = fs.readdirSync(seasonDir)
+        
+        for (const file of files) {
+          if (isVideoFile(file)) {
+            const filePath = path.join(seasonDir, file)
+            const relativePath = path.relative(MEDIA_PATH, filePath)
+            
+            try {
+              const stats = fs.statSync(filePath)
+              const metadata = {
+                filename: relativePath,
+                displayName: path.basename(file, path.extname(file)),
+                fileSize: stats.size,
+                duration: 0 // Sera rempli par ffprobe si nécessaire
+              }
+              
+              episodes.push(metadata)
+            } catch (error) {
+              console.error(`❌ Erreur lecture épisode ${file}:`, error.message)
+            }
+          }
+        }
+        
+        if (episodes.length > 0) {
+          episodes.sort((a, b) => a.displayName.localeCompare(b.displayName))
+          seasons.push({
+            name: seasonName,
+            episodes: episodes
+          })
+        }
+      }
+      
+      if (seasons.length > 0) {
+        // Construire le chemin relatif du poster
+        const posterRelativePath = path.join(seriesFolderName, seriesName)
+        
+        console.log(`📸 Poster pour ${seriesName}:`, {
+          exists: hasPoster,
+          path: posterRelativePath,
+          fullPath: path.join(MEDIA_PATH, posterRelativePath, 'poster.jpg')
+        })
+        
+        series.push({
+          name: seriesName,
+          seasons: seasons,
+          posterPath: hasPoster ? posterRelativePath : null
+        })
+      }
+    }
+    
+    console.log(`📺 ${series.length} série(s) organisée(s)`)
+    return series
+    
+  } catch (error) {
+    console.error('❌ Erreur lors de la lecture des séries:', error)
+    return series
+  }
+} 

@@ -16,7 +16,7 @@ api.interceptors.response.use(
   }
 )
 
-// Récupérer la liste des vidéos
+// Récupérer la liste des vidéos (exclut downloads)
 export const getVideos = async () => {
   try {
     const response = await api.get('/api/videos')
@@ -24,6 +24,18 @@ export const getVideos = async () => {
     return response.data
   } catch (error) {
     console.error('Erreur lors de la récupération des vidéos:', error)
+    throw error
+  }
+}
+
+// Récupérer la liste des films uniquement (dossier films)
+export const getFilms = async () => {
+  try {
+    const response = await api.get('/api/films')
+    console.log('🎬 Films récupérés:', response.data.length)
+    return response.data
+  } catch (error) {
+    console.error('Erreur lors de la récupération des films:', error)
     throw error
   }
 }
@@ -44,6 +56,19 @@ export const getVideoMetadata = async (videoPath) => {
 export const getVideoStreamUrl = (videoPath) => {
   // videoPath est maintenant le chemin relatif complet
   return `${API_URL}/api/video/${encodeURIComponent(videoPath)}`
+}
+
+export const getSeries = async () => {
+  try {
+    const response = await fetch(`${API_URL}/api/series`)
+    if (!response.ok) {
+      throw new Error(`Erreur HTTP: ${response.status}`)
+    }
+    return await response.json()
+  } catch (error) {
+    console.error('Erreur lors de la récupération des séries:', error)
+    throw error
+  }
 }
 
 export default api 
