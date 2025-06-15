@@ -1,5 +1,5 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { Home, Film, PlayCircle } from 'lucide-react'
+import { Home, Film, PlayCircle, Tv } from 'lucide-react'
 
 const Navbar = () => {
   const navigate = useNavigate()
@@ -42,6 +42,18 @@ const Navbar = () => {
             >
               <PlayCircle className="w-4 h-4" />
               <span>Films</span>
+            </Link>
+
+            <Link 
+              to="/series" 
+              className={`flex items-center space-x-2 transition-colors ${
+                isActive('/series') 
+                  ? 'text-white border-b-2 border-netflix-red pb-1' 
+                  : 'text-gray-300 hover:text-white'
+              }`}
+            >
+              <Tv className="w-4 h-4" />
+              <span>Séries</span>
             </Link>
           </div>
         </div>

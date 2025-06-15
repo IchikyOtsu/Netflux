@@ -58,4 +58,17 @@ export const getVideoStreamUrl = (videoPath) => {
   return `${API_URL}/api/video/${encodeURIComponent(videoPath)}`
 }
 
+export const getSeries = async () => {
+  try {
+    const response = await fetch(`${API_URL}/api/series`)
+    if (!response.ok) {
+      throw new Error(`Erreur HTTP: ${response.status}`)
+    }
+    return await response.json()
+  } catch (error) {
+    console.error('Erreur lors de la récupération des séries:', error)
+    throw error
+  }
+}
+
 export default api 

@@ -649,18 +649,32 @@ app.get('/api/image/:moviePath(*)', (req, res) => {
     const moviePath = decodeURIComponent(req.params.moviePath)
     const imageType = req.query.type || 'poster'
     
-    // Construire le chemin vers le dossier du film
-    const movieDir = path.join(MEDIA_PATH, path.dirname(moviePath))
+    // Construire le chemin vers le dossier du film/série
+    // Pour les séries, moviePath est "series/Test" - on utilise le chemin complet
+    // Pour les films, moviePath est "films/Movie.mkv" - on prend le dirname
+    let movieDir
+    
+    // Vérifier si c'est un fichier vidéo en regardant l'extension
+    const isVideoFile = /\.(mkv|mp4|avi|mov|wmv|flv|webm|m4v)$/i.test(moviePath)
+    
+    if (isVideoFile) {
+      // C'est un fichier vidéo (film), prendre le dossier parent
+      movieDir = path.join(MEDIA_PATH, path.dirname(moviePath))
+    } else {
+      // C'est un dossier (série), utiliser le chemin complet
+      movieDir = path.join(MEDIA_PATH, moviePath)
+    }
+    
     const imageName = imageType === 'fanart' ? 'fanart.jpg' : 'poster.jpg'
     const imagePath = path.join(movieDir, imageName)
     
     console.log('🖼️ Demande d\'image:')
-    console.log('   - Chemin film:', moviePath)
+    console.log('   - Chemin reçu:', moviePath)
+    console.log('   - Est un fichier vidéo:', isVideoFile)
     console.log('   - Type:', imageType)
-    console.log('   - Dossier film:', movieDir)
+    console.log('   - Dossier calculé:', movieDir)
     console.log('   - Chemin image:', imagePath)
     console.log('   - MEDIA_PATH:', MEDIA_PATH)
-    console.log('   - path.dirname(moviePath):', path.dirname(moviePath))
     console.log('   - Dossier existe:', fs.existsSync(movieDir))
     console.log('   - Image existe:', fs.existsSync(imagePath))
     
@@ -682,7 +696,8 @@ app.get('/api/image/:moviePath(*)', (req, res) => {
         type: imageType,
         movieDir: movieDir,
         moviePath: moviePath,
-        mediaPath: MEDIA_PATH
+        mediaPath: MEDIA_PATH,
+        isVideoFile: isVideoFile
       })
     }
     
@@ -707,6 +722,45 @@ app.get('/api/image/:moviePath(*)', (req, res) => {
     console.error('❌ Erreur lors du service d\'image:', error)
     res.status(500).json({ 
       error: 'Erreur serveur',
+      details: error.message
+    })
+  }
+})
+
+// Route: Récupérer toutes les séries
+app.get('/api/series', (req, res) => {
+  try {
+    const seriesPath = path.join(MEDIA_PATH, 'series')
+    const seriesPathFr = path.join(MEDIA_PATH, 'Séries')
+    
+    console.log('📺 Recherche des séries:')
+    console.log(`   - MEDIA_PATH: ${MEDIA_PATH}`)
+    console.log(`   - Chemin series: ${seriesPath}`)
+    console.log(`   - Chemin Séries: ${seriesPathFr}`)
+    console.log(`   - series existe: ${fs.existsSync(seriesPath)}`)
+    console.log(`   - Séries existe: ${fs.existsSync(seriesPathFr)}`)
+    
+    // Essayer les deux noms de dossier
+    let finalSeriesPath = seriesPath
+    let seriesFolderName = 'series'
+    if (!fs.existsSync(seriesPath) && fs.existsSync(seriesPathFr)) {
+      finalSeriesPath = seriesPathFr
+      seriesFolderName = 'Séries'
+    }
+    
+    if (!fs.existsSync(finalSeriesPath)) {
+      console.log('⚠️ Aucun dossier de séries trouvé')
+      return res.json([]) // Retourner un tableau vide au lieu d'une erreur
+    }
+    
+    const series = getSeriesData(finalSeriesPath, seriesFolderName)
+    console.log(`✅ ${series.length} série(s) trouvée(s)`)
+    
+    res.json(series)
+  } catch (error) {
+    console.error('❌ Erreur lors de la récupération des séries:', error)
+    res.status(500).json({ 
+      error: 'Erreur lors de la récupération des séries',
       details: error.message
     })
   }
@@ -786,4 +840,98 @@ app.listen(PORT, '0.0.0.0', () => {
   } else {
     console.warn(`⚠️  Le dossier média ${MEDIA_PATH} n'existe pas`)
   }
-}) 
+})
+
+// Fonction pour détecter et organiser les séries
+const getSeriesData = (seriesPath, seriesFolderName) => {
+  const series = []
+  
+  try {
+    if (!fs.existsSync(seriesPath)) {
+      console.log(`📺 Dossier séries non trouvé: ${seriesPath}`)
+      return series
+    }
+    
+    const seriesDirectories = fs.readdirSync(seriesPath, { withFileTypes: true })
+      .filter(dirent => dirent.isDirectory())
+      .map(dirent => dirent.name)
+    
+    console.log(`📺 Séries trouvées: ${seriesDirectories.length}`)
+    
+    for (const seriesName of seriesDirectories) {
+      const seriesDir = path.join(seriesPath, seriesName)
+      const seasons = []
+      
+      // Vérifier si un poster existe
+      const posterPath = path.join(seriesDir, 'poster.jpg')
+      const hasPoster = fs.existsSync(posterPath)
+      
+      // Lire les saisons
+      const seasonDirectories = fs.readdirSync(seriesDir, { withFileTypes: true })
+        .filter(dirent => dirent.isDirectory())
+        .map(dirent => dirent.name)
+        .sort() // Trier les saisons
+      
+      for (const seasonName of seasonDirectories) {
+        const seasonDir = path.join(seriesDir, seasonName)
+        const episodes = []
+        
+        // Lire les épisodes
+        const files = fs.readdirSync(seasonDir)
+        
+        for (const file of files) {
+          if (isVideoFile(file)) {
+            const filePath = path.join(seasonDir, file)
+            const relativePath = path.relative(MEDIA_PATH, filePath)
+            
+            try {
+              const stats = fs.statSync(filePath)
+              const metadata = {
+                filename: relativePath,
+                displayName: path.basename(file, path.extname(file)),
+                fileSize: stats.size,
+                duration: 0 // Sera rempli par ffprobe si nécessaire
+              }
+              
+              episodes.push(metadata)
+            } catch (error) {
+              console.error(`❌ Erreur lecture épisode ${file}:`, error.message)
+            }
+          }
+        }
+        
+        if (episodes.length > 0) {
+          episodes.sort((a, b) => a.displayName.localeCompare(b.displayName))
+          seasons.push({
+            name: seasonName,
+            episodes: episodes
+          })
+        }
+      }
+      
+      if (seasons.length > 0) {
+        // Construire le chemin relatif du poster
+        const posterRelativePath = path.join(seriesFolderName, seriesName)
+        
+        console.log(`📸 Poster pour ${seriesName}:`, {
+          exists: hasPoster,
+          path: posterRelativePath,
+          fullPath: path.join(MEDIA_PATH, posterRelativePath, 'poster.jpg')
+        })
+        
+        series.push({
+          name: seriesName,
+          seasons: seasons,
+          posterPath: hasPoster ? posterRelativePath : null
+        })
+      }
+    }
+    
+    console.log(`📺 ${series.length} série(s) organisée(s)`)
+    return series
+    
+  } catch (error) {
+    console.error('❌ Erreur lors de la lecture des séries:', error)
+    return series
+  }
+} 
